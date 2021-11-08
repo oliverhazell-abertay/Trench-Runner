@@ -1,0 +1,7 @@
+/.vs/
+/Debug/
+/PSVita/
+/Win32/
+/x64/
+*.VC.VC.opendb
+*.VC.db
