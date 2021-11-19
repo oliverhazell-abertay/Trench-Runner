@@ -51,7 +51,7 @@ void GameOver::Update(float deltaTime)
 		{
 			if (controller_manager->GetController(0)->buttons_down() == gef_SONY_CTRL_CROSS)
 			{
-				signal_to_change = MENU
+				signal_to_change = MENU;
 			}
 		}
 		// keyboard input

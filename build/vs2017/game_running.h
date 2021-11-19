@@ -14,12 +14,12 @@
 #include "bullet.h"
 #include "duck.h"
 
-// Vita AR includes
-#include <camera.h>
-#include <gxm.h>
-#include <motion.h>
-#include <libdbg.h>
-#include <libsmart.h>
+//// Vita AR includes
+//#include <camera.h>
+//#include <gxm.h>
+//#include <motion.h>
+//#include <libdbg.h>
+//#include <libsmart.h>
 
 namespace gef
 {
@@ -52,10 +52,11 @@ public:
 	bool IsColliding_AABBToAABB(const gef::MeshInstance& meshInstance1, const gef::MeshInstance& meshInstance2);
 private:
 	void InitFont();
-	void InitAR();
 	void DrawHUD();
 	void Input(float delta_time);
 	void UpdateDucks(float delta_time);
+	void SetupLights();
+	void SetupCamera();
 
 	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
@@ -68,6 +69,14 @@ private:
 
 	// Game logic
 	bool isColliding = false;
+
+	// Camera
+	gef::Vector4 camera_eye_;
+	gef::Vector4 camera_lookat_;
+	gef::Vector4 camera_up_;
+	float camera_fov_;
+	float near_plane_;
+	float far_plane_;
 
 	// Game objects
 	Bullet bullet_;
@@ -91,12 +100,12 @@ private:
 	int score = 0;
 
 	// AR
-	gef::Matrix44 camera_feed_matrix_;
+	/*gef::Matrix44 camera_feed_matrix_;
 	gef::Matrix44 projection_3d_;
 	gef::Sprite camera_image_sprite_;
 	gef::TextureVita camera_feed_tex_;
 	float cameraAspectRatio;
 	float displayAspectRatio;
-	float verticalScaleFactor;
+	float verticalScaleFactor;*/
 };
 

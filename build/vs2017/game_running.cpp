@@ -12,8 +12,8 @@
 #include <graphics/renderer_3d.h>
 #include <graphics/scene.h>
 #include <stdlib.h>
-#include <sony_sample_framework.h>
-#include <sony_tracking.h>
+//#include <sony_sample_framework.h>
+//#include <sony_tracking.h>
 #include <graphics/renderer_3d.h>
 #include <graphics/render_target.h>
 #include <graphics/image_data.h>
@@ -35,12 +35,11 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	type_ = GAMERUNNING;
 	srand(time(NULL));
 	InitFont();
-	InitAR();
 
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
 
 	// Player Init
-	bullet_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(MARKER_SIZE / 4.0f, MARKER_SIZE / 4.0f, MARKER_SIZE / 4.0f));
+	bullet_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
 	gef::Vector4 translation(0.0f, 0.0f, 0.0f);
 	bullet_.position_ = translation;
 	bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
@@ -49,18 +48,18 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	for (int i = 0; i < max_ducks; i++)
 	{
 		Duck tempDuck;
-		tempDuck.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(MARKER_SIZE / 6.0f, MARKER_SIZE / 6.0f, MARKER_SIZE / 6.0f)));
+		tempDuck.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
 		gef::Vector4 translation_(0.0f, 0.0f, 0.0f);
 		tempDuck.position_ = translation_;
 		ducks_.push_back(tempDuck);
 	}
 
 	// Init duck spawner
-	const float grass_size_ = 3000.0f;
-	grass_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(MARKER_SIZE / 2.0f, MARKER_SIZE / 2.0f, MARKER_SIZE / 2.0f)));
-	gef::Vector4 grass_translation_(0.0f, 0.0f, 0.0f);
+	const float grass_size_ = 300.0f;
+	grass_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
+	gef::Vector4 grass_translation_(0.0f, -100.0f, 0.0f);
 	grass_.position_ = grass_translation_;
-	grass_.scale_ = gef::Vector4(grass_size_, 1.0f, 0.059f);
+	grass_.scale_ = gef::Vector4(grass_size_, 1.0f, grass_size_);
 
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
@@ -85,6 +84,8 @@ void GameRunning::OnEntry(Type prev_game_state)
 		score = 0;
 		wave_count = 0;
 	}
+	SetupCamera();
+	SetupLights();
 }
 
 void GameRunning::OnExit(Type next_game_state)
@@ -121,26 +122,6 @@ void GameRunning::Update(float delta_time)
 	Input(delta_time);
 	UpdateDucks(delta_time);
 
-	// use the tracking library to try and find markers
-	smartUpdate(dat->currentImage);
-	//check to see if a particular marker can be found
-	if (sampleIsMarkerFound(1))
-	{
-		// marker is being tracked, get its transform
-		gef::Matrix44 marker_transform;
-		sampleGetTransform(1, &marker_transform);
-		// set the transform of the 3D mesh instance to draw on top of the marker
-		grass_.set_transform(marker_transform);
-		for (ALL_DUCKS)
-		{
-			// if duck is waiting to spawn, reset position to marker
-			if (!ducks_[i].isFlying)
-				ducks_[i].set_transform(marker_transform);
-			// ready to spawn
-		}
-	}
-	sampleUpdateEnd(dat);
-
 	// floor update
 	grass_.Update(delta_time);
 	// Player update
@@ -155,39 +136,22 @@ void GameRunning::Update(float delta_time)
 
 void GameRunning::Render()
 {
-	AppData* dat = sampleRenderBegin();
-
-	//
-	// Render the camera feed
-	//
-
-	// REMEMBER AND SET THE PROJECTION MATRIX HERE
-	sprite_renderer_->set_projection_matrix(camera_feed_matrix_);
-
-	sprite_renderer_->Begin(true);
-
-	// DRAW CAMERA FEED SPRITE HERE
-	// check there is data present for the camera image before trying to draw it
-	if (dat->currentImage)
-	{
-		camera_feed_tex_.set_texture(dat->currentImage->tex_yuv);
-		sprite_renderer_->DrawSprite(camera_image_sprite_);
-	}
-
-	sprite_renderer_->End();
-
 	//
 	// Render 3D scene
 	//
 
 	// SET VIEW AND PROJECTION MATRIX HERE
-	renderer_3d_->set_projection_matrix(projection_3d_);
-	gef::Matrix44 view_matrix_;
-	view_matrix_.SetIdentity();
-	renderer_3d_->set_view_matrix(view_matrix_);
 
-	// Begin rendering 3D meshes, don't clear the frame buffer
-	renderer_3d_->Begin(false);
+	gef::Matrix44 projection_matrix;
+	gef::Matrix44 view_matrix;
+
+	projection_matrix = platform_->PerspectiveProjectionFov(camera_fov_, (float)platform_->width() / (float)platform_->height(), near_plane_, far_plane_);
+	view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
+	renderer_3d_->set_projection_matrix(projection_matrix);
+	renderer_3d_->set_view_matrix(view_matrix);
+
+	// Begin rendering 3D meshes
+	renderer_3d_->Begin();
 		// Draw floor
 		renderer_3d_->DrawMesh(grass_);
 		// Draw ducks
@@ -207,8 +171,6 @@ void GameRunning::Render()
 	sprite_renderer_->Begin(false);
 		DrawHUD();
 	sprite_renderer_->End();
-
-	sampleRenderEnd();
 }
 
 void GameRunning::InitFont()
@@ -226,6 +188,28 @@ void GameRunning::DrawHUD()
 	}
 	// Draw cursor
 	sprite_renderer_->DrawSprite(cursor_);
+}
+
+void GameRunning::SetupLights()
+{
+	gef::PointLight default_point_light;
+	default_point_light.set_colour(gef::Colour(0.7f, 0.7f, 1.0f, 1.0f));
+	default_point_light.set_position(gef::Vector4(-300.0f, -500.0f, 100.0f));
+
+	gef::Default3DShaderData& default_shader_data = renderer_3d_->default_shader_data();
+	default_shader_data.set_ambient_light_colour(gef::Colour(0.5f, 0.5f, 0.5f, 1.0f));
+	default_shader_data.AddPointLight(default_point_light);
+}
+
+void GameRunning::SetupCamera()
+{
+	// initialise the camera settings
+	camera_eye_ = gef::Vector4(5.0f, 5.0f, 500.0f);
+	camera_lookat_ = gef::Vector4(0.0f, 0.0f, 0.0f);
+	camera_up_ = gef::Vector4(0.0f, 1.0f, 0.0f);
+	camera_fov_ = gef::DegToRad(45.0f);
+	near_plane_ = 0.01f;
+	far_plane_ = 100.f;
 }
 
 gef::Mesh* GameRunning::GetFirstMesh(gef::Scene* scene)
@@ -299,44 +283,10 @@ void GameRunning::SpawnWave()
 {
 	for (ALL_DUCKS)
 	{
-		ducks_.at(i).Spawn(gef::Vector4(0.5f, 0.3f, 0.0f);
+		ducks_.at(i).Spawn(gef::Vector4(0.5f, 0.3f, 0.0f));
 	}
 	active_duck_count = ducks_.size();
 	wave_count++;
-}
-
-void GameRunning::InitAR()
-{
-	// initialise sony framework
-	sampleInitialize();
-	smartInitialize();
-
-	// reset marker tracking
-	AppData* dat = sampleUpdateBegin();
-	smartTrackingReset();
-	sampleUpdateEnd(dat);
-
-	// Set orthographic view
-	camera_feed_matrix_ = platform_->OrthographicFrustum(-1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
-
-	// Calculate vertical image scale factor
-	cameraAspectRatio = 640.0f / 480.0f;
-	displayAspectRatio = 960.0f / 544.0f;
-	verticalScaleFactor = displayAspectRatio / cameraAspectRatio;
-
-	// Set projection matrix for 3d
-	projection_3d_.SetIdentity();
-	projection_3d_ = platform_->PerspectiveProjectionFov(SCE_SMART_IMAGE_FOV, (float)SCE_SMART_IMAGE_WIDTH / (float)SCE_SMART_IMAGE_HEIGHT, 0.1f, 100.0f);
-	gef::Matrix44 scale_temp_;
-	scale_temp_.SetIdentity();
-	scale_temp_.SetRow(1, gef::Vector4(0.0f, verticalScaleFactor, 0.0f));
-	projection_3d_ = projection_3d_ * scale_temp_;
-
-	// Init sprite for camera sprite
-	camera_image_sprite_.set_position(gef::Vector4(0.0f, 0.0f, 1.0f));
-	camera_image_sprite_.set_width(2.0f);
-	camera_image_sprite_.set_height(2.0f * verticalScaleFactor);
-	camera_image_sprite_.set_texture(&camera_feed_tex_);
 }
 
 void GameRunning::Input(float delta_time)
@@ -416,7 +366,8 @@ void GameRunning::Input(float delta_time)
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE) && !bullet_.GetMoving())
 			{
 				bullet_.SetActive(true);
-				bullet_.position_ = cursor_.position();
+				bullet_.position_ = camera_eye_;
+				//bullet_.position_ = cursor_.position();
 				bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, -10.0f);
 			}
 			// Pause
