@@ -14,5 +14,12 @@ void Bullet::Update(float deltaTime)
 		SetActive(false);
 	}
 
+	FaceDirectionOfMovement();
+
 	GameObject::Update(deltaTime);
+}
+
+void Bullet::FaceDirectionOfMovement()
+{
+
 }

@@ -17,10 +17,10 @@
 #include <graphics/renderer_3d.h>
 #include <graphics/render_target.h>
 #include <graphics/image_data.h>
+#include <graphics/material.h>
 
 #define SCREEN_CENTRE_X 480.0f
 #define SCREEN_CENTRE_Y 272.0f
-#define MARKER_SIZE 0.059f
 #define ALL_DUCKS int i = 0; i < ducks_.size(); i++
 
 GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Renderer3D* rend_3d_, gef::InputManager* in_) :
@@ -39,7 +39,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
 
 	// Player Init
-	bullet_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
+	bullet_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
 	gef::Vector4 translation(0.0f, 0.0f, 0.0f);
 	bullet_.position_ = translation;
 	bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
@@ -141,7 +141,6 @@ void GameRunning::Render()
 	//
 
 	// SET VIEW AND PROJECTION MATRIX HERE
-
 	gef::Matrix44 projection_matrix;
 	gef::Matrix44 view_matrix;
 
@@ -164,7 +163,11 @@ void GameRunning::Render()
 		}
 		//Draw player
 		if (bullet_.GetActive())
+		{
+			renderer_3d_->set_override_material(&primitive_builder_->red_material());
 			renderer_3d_->DrawMesh(bullet_);
+		}
+	renderer_3d_->set_override_material(NULL);
 	renderer_3d_->End();
 
 	// Draw UI
@@ -181,11 +184,11 @@ void GameRunning::InitFont()
 
 void GameRunning::DrawHUD()
 {
-	if (font_)
+	/*if (font_)
 	{
 		if(next_wave)
 			font_->RenderText(sprite_renderer_, gef::Vector4(SCREEN_CENTRE_X, 100.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_CENTRE, "NEXT WAVE IN: %.1f", (wave_delay - wave_timer));
-	}
+	}*/
 	// Draw cursor
 	sprite_renderer_->DrawSprite(cursor_);
 }
@@ -327,48 +330,46 @@ void GameRunning::Input(float delta_time)
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_W))
 			{
 				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
-				if (!bullet_.GetMoving())
+				/*if (!bullet_.GetMoving())
 				{
 					bullet_.position_.set_y(bullet_.position_.y() + (sensitivity * delta_time));
-				}
+				}*/
 			}
 			// Move left
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
 			{
 				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
-				if (!bullet_.GetMoving())
+				/*if (!bullet_.GetMoving())
 				{
 					bullet_.position_.set_x(bullet_.position_.x() - (sensitivity * delta_time));
-				}
+				}*/
 			}
 			// Move down
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
 			{
 				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
-				if (!bullet_.GetMoving())
+				/*if (!bullet_.GetMoving())
 				{
 					bullet_.position_.set_y(bullet_.position_.y() - (sensitivity * delta_time));
-				}
+				}*/
 			}
 			// Move right
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
 			{
 				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
-				if (!bullet_.GetMoving())
+				/*if (!bullet_.GetMoving())
 				{
 					bullet_.position_.set_x(bullet_.position_.x() + (sensitivity * delta_time));
-				}
+				}*/
 			}
 			// Set cursor to new position based on input
 			cursor_.set_position(temp_pos_);
 
 			// Shoot
-			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE) && !bullet_.GetMoving())
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
 			{
 				bullet_.SetActive(true);
-				bullet_.position_ = camera_eye_;
-				//bullet_.position_ = cursor_.position();
-				bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, -10.0f);
+				CastRayFromCamera();
 			}
 			// Pause
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_P))
@@ -410,4 +411,37 @@ void GameRunning::UpdateDucks(float delta_time)
 			wave_timer = 0.0f;
 		}
 	}
+}
+
+// https://antongerdelan.net/opengl/raycasting.html
+void GameRunning::CastRayFromCamera()
+{
+	gef::Vector4 startPoint;
+	gef::Vector4 direction;
+
+	gef::Vector2 ndc;
+
+	float hw = platform_->width() * 0.5f;
+	float hh = platform_->height() * 0.5f;
+
+	ndc.x = (static_cast<float>(cursor_.position().x()) - hw) / hw;
+	ndc.y = (hh - static_cast<float>(cursor_.position().y())) / hh;
+
+	gef::Matrix44 projectionInverse;
+	projectionInverse.Inverse(renderer_3d_->view_matrix() * renderer_3d_->projection_matrix());
+
+	gef::Vector4 nearPoint, farPoint;
+
+	nearPoint = gef::Vector4(ndc.x, ndc.y, 0.01f, 1.0f).TransformW(projectionInverse);
+	farPoint = gef::Vector4(ndc.x, ndc.y, 100.0f, 1.0f).TransformW(projectionInverse);
+
+	nearPoint /= nearPoint.w();
+	farPoint /= farPoint.w();
+
+	startPoint = gef::Vector4(nearPoint.x(), nearPoint.y(), nearPoint.z());
+	direction = nearPoint - farPoint;
+	direction.Normalise();
+
+	bullet_.position_ = startPoint;
+	bullet_.velocity_ = direction * 10;
 }

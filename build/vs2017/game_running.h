@@ -99,6 +99,8 @@ private:
 	// Score keeping
 	int score = 0;
 
+	void CastRayFromCamera();
+
 	// AR
 	/*gef::Matrix44 camera_feed_matrix_;
 	gef::Matrix44 projection_3d_;

@@ -156,7 +156,7 @@ gef::Mesh* PrimitiveBuilder::CreateBoxMesh(const gef::Vector4& half_size, gef::V
 
 		// if materials pointer is valid then assume we have an array of Material pointers
 		// with a size greater than 6 (one material per face)
-		if(materials)
+		if (materials)
 			primitive->set_material(materials[primitive_num]);
 	}
 

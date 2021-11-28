@@ -12,6 +12,7 @@ public:
 	gef::Vector4 position_;
 	gef::Vector4 velocity_;
 	gef::Vector4 scale_;
+	gef::Vector4 rotation_;
 	void BuildTransform();
 	bool GetActive() { return active; }
 	void SetActive(bool nextActive) { active = nextActive; }
