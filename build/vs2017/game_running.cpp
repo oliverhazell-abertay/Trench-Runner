@@ -121,6 +121,15 @@ void GameRunning::Update(float delta_time)
 {
 	Input(delta_time);
 	UpdateDucks(delta_time);
+	
+	// Update lasers
+	for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
+	{
+		if (lasers_[laser_num]->GetActive())
+		{
+			lasers_.at(laser_num)->Update(delta_time);
+		}
+	}
 
 	// floor update
 	grass_.Update(delta_time);
@@ -166,6 +175,15 @@ void GameRunning::Render()
 		{
 			renderer_3d_->set_override_material(&primitive_builder_->red_material());
 			renderer_3d_->DrawMesh(bullet_);
+		}
+		// Draw lasers
+		for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
+		{
+			if (lasers_[laser_num]->GetActive())
+			{
+				renderer_3d_->set_override_material(&primitive_builder_->red_material());
+				renderer_3d_->DrawMesh(*lasers_.at(laser_num));
+			}
 		}
 	renderer_3d_->set_override_material(NULL);
 	renderer_3d_->End();
@@ -368,8 +386,14 @@ void GameRunning::Input(float delta_time)
 			// Shoot
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
 			{
-				bullet_.SetActive(true);
-				CastRayFromCamera();
+				/*bullet_.SetActive(true);
+				CastRayFromCamera(&bullet_);*/
+				Bullet* tempLaser;
+				tempLaser = new Bullet;
+				tempLaser->SetActive(true);
+				tempLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
+				CastRayFromCamera(tempLaser);
+				lasers_.push_back(tempLaser);
 			}
 			// Pause
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_P))
@@ -414,7 +438,7 @@ void GameRunning::UpdateDucks(float delta_time)
 }
 
 // https://antongerdelan.net/opengl/raycasting.html
-void GameRunning::CastRayFromCamera()
+void GameRunning::CastRayFromCamera(Bullet* bullet)
 {
 	gef::Vector4 startPoint;
 	gef::Vector4 direction;
@@ -442,6 +466,7 @@ void GameRunning::CastRayFromCamera()
 	direction = nearPoint - farPoint;
 	direction.Normalise();
 
-	bullet_.position_ = startPoint;
-	bullet_.velocity_ = direction * 10;
+	startPoint.set_y(startPoint.y() - 0.5f);
+	bullet->position_ = startPoint;
+	bullet->velocity_ = direction * shootSpeed;
 }

@@ -27,5 +27,6 @@ void Bullet::FaceDirectionOfMovement()
 	float theta = atan(velocity_.x() / velocity_.z());
 	rotation_.set_y(theta);
 	theta = atan(velocity_.y() / velocity_.z());
+	theta *= -1.0f;
 	rotation_.set_x(theta);
 }

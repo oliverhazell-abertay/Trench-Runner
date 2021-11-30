@@ -80,6 +80,7 @@ private:
 
 	// Game objects
 	Bullet bullet_;
+	std::vector<Bullet*> lasers_;
 	std::vector<Duck> ducks_;
 	GameObject grass_;
 
@@ -99,7 +100,9 @@ private:
 	// Score keeping
 	int score = 0;
 
-	void CastRayFromCamera();
+	int shootSpeed = 100;
+
+	void CastRayFromCamera(Bullet* bullet);
 
 	// AR
 	/*gef::Matrix44 camera_feed_matrix_;

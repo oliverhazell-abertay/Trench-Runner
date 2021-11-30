@@ -27,12 +27,16 @@ void GameObject::BuildTransform()
 {
 	gef::Matrix44 trans;
 	gef::Matrix44 scale_mtx;
-	gef::Matrix44 rotation_mtx;
+	gef::Matrix44 rotation_mtx, rotation_mtx_x, rotation_mtx_y;
 	trans.SetIdentity();
 	scale_mtx.SetIdentity();
 	rotation_mtx.SetIdentity();
+	rotation_mtx_x.SetIdentity();
+	rotation_mtx_y.SetIdentity();
 	scale_mtx.Scale(scale_);
-	rotation_mtx.RotationY(rotation_.y());
+	rotation_mtx_x.RotationX(rotation_.x());
+	rotation_mtx_y.RotationY(rotation_.y());
+	rotation_mtx = rotation_mtx_x * rotation_mtx_y;
 	trans = scale_mtx * rotation_mtx;
 	trans.SetTranslation(position_);
 	set_transform(trans);
