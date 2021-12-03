@@ -12,7 +12,7 @@
 #include "game_object.h"
 #include "load_texture.h"
 #include "bullet.h"
-#include "duck.h"
+#include "enemy.h"
 
 //// Vita AR includes
 //#include <camera.h>
@@ -54,7 +54,6 @@ private:
 	void InitFont();
 	void DrawHUD();
 	void Input(float delta_time);
-	void UpdateDucks(float delta_time);
 	void SetupLights();
 	void SetupCamera();
 
@@ -81,8 +80,8 @@ private:
 	// Game objects
 	Bullet bullet_;
 	std::vector<Bullet*> lasers_;
-	std::vector<Duck> ducks_;
 	GameObject grass_;
+	Enemy enemy_;
 
 	// UI
 	gef::Sprite cursor_;
@@ -101,6 +100,7 @@ private:
 	int score = 0;
 
 	int shootSpeed = 100;
+
 
 	void CastRayFromCamera(Bullet* bullet);
 

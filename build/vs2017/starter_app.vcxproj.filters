@@ -57,14 +57,14 @@
     <ClCompile Include="bullet.cpp">
       <Filter>Source Files\GameObjects</Filter>
     </ClCompile>
-    <ClCompile Include="duck.cpp">
-      <Filter>Source Files\GameObjects</Filter>
-    </ClCompile>
     <ClCompile Include="game_over.cpp">
       <Filter>Source Files\GameStates</Filter>
     </ClCompile>
     <ClCompile Include="paused.cpp">
       <Filter>Source Files\GameStates</Filter>
+    </ClCompile>
+    <ClCompile Include="enemy.cpp">
+      <Filter>Source Files\GameObjects</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -89,9 +89,6 @@
     <ClInclude Include="..\..\load_texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="duck.h">
-      <Filter>Header Files\GameObjects</Filter>
-    </ClInclude>
     <ClInclude Include="bullet.h">
       <Filter>Header Files\GameObjects</Filter>
     </ClInclude>
@@ -100,6 +97,9 @@
     </ClInclude>
     <ClInclude Include="paused.h">
       <Filter>Header Files\GameStates</Filter>
+    </ClInclude>
+    <ClInclude Include="enemy.h">
+      <Filter>Header Files\GameObjects</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

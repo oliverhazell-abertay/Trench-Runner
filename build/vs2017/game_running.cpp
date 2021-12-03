@@ -21,7 +21,7 @@
 
 #define SCREEN_CENTRE_X 480.0f
 #define SCREEN_CENTRE_Y 272.0f
-#define ALL_DUCKS int i = 0; i < ducks_.size(); i++
+#define ALL_LASERS int laser_num = 0; laser_num < lasers_.size(); laser_num++
 
 GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Renderer3D* rend_3d_, gef::InputManager* in_) :
 	platform_(platform),
@@ -44,17 +44,12 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	bullet_.position_ = translation;
 	bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
 
-	// Init ducks
-	for (int i = 0; i < max_ducks; i++)
-	{
-		Duck tempDuck;
-		tempDuck.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
-		gef::Vector4 translation_(0.0f, 0.0f, 0.0f);
-		tempDuck.position_ = translation_;
-		ducks_.push_back(tempDuck);
-	}
+	// Enemy Init
+	enemy_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
+	enemy_.position_ = gef::Vector4(5.0f, 5.0f, 480.0f);
+	enemy_.material = primitive_builder_->blue_material();
 
-	// Init duck spawner
+	// Init ground spawner
 	const float grass_size_ = 300.0f;
 	grass_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
 	gef::Vector4 grass_translation_(0.0f, -100.0f, 0.0f);
@@ -120,10 +115,8 @@ void GameRunning::CleanUp()
 void GameRunning::Update(float delta_time)
 {
 	Input(delta_time);
-	UpdateDucks(delta_time);
-	
 	// Update lasers
-	for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
+	for(ALL_LASERS)
 	{
 		if (lasers_[laser_num]->GetActive())
 		{
@@ -131,16 +124,26 @@ void GameRunning::Update(float delta_time)
 		}
 	}
 
+	for(ALL_LASERS)
+	{
+		if (IsColliding_AABBToAABB(*lasers_[laser_num], enemy_))
+		{
+			enemy_.material = primitive_builder_->red_material();
+		}
+	}
+
 	// floor update
 	grass_.Update(delta_time);
 	// Player update
 	bullet_.Update(delta_time);
+	// Enemy update
+	enemy_.Update(delta_time);
 
-	// Win condition
-	if (score > 10 || wave_count >= 5)
-	{
-		signal_to_change = GAMEOVER;
-	}
+	//// Win condition
+	//if (score > 10 || wave_count >= 5)
+	//{
+	//	signal_to_change = GAMEOVER;
+	//}
 }
 
 void GameRunning::Render()
@@ -162,14 +165,9 @@ void GameRunning::Render()
 	renderer_3d_->Begin();
 		// Draw floor
 		renderer_3d_->DrawMesh(grass_);
-		// Draw ducks
-		for (ALL_DUCKS)
-		{
-			if (ducks_[i].GetActive() == true)
-			{
-				renderer_3d_->DrawMesh(ducks_.at(i));
-			}
-		}
+		// Draw Enemy
+		renderer_3d_->set_override_material(&enemy_.material);
+		renderer_3d_->DrawMesh(enemy_);
 		//Draw player
 		if (bullet_.GetActive())
 		{
@@ -300,16 +298,6 @@ bool GameRunning::IsColliding_AABBToAABB(const gef::MeshInstance& meshInstance1,
 	return false;
 }
 
-void GameRunning::SpawnWave()
-{
-	for (ALL_DUCKS)
-	{
-		ducks_.at(i).Spawn(gef::Vector4(0.5f, 0.3f, 0.0f));
-	}
-	active_duck_count = ducks_.size();
-	wave_count++;
-}
-
 void GameRunning::Input(float delta_time)
 {
 	// Input
@@ -400,39 +388,6 @@ void GameRunning::Input(float delta_time)
 			{
 				signal_to_change = PAUSE;
 			}
-		}
-	}
-}
-
-void GameRunning::UpdateDucks(float delta_time)
-{
-	// If ducks are still alive
-	if (active_duck_count > 0)
-		active_duck_count = ducks_.size();
-	// Ducks update
-	for (ALL_DUCKS)
-	{
-		ducks_.at(i).Update(delta_time);
-		// Duck has been shot
-		if (IsColliding_AABBToAABB(bullet_, ducks_[i]) == true && ducks_.at(i).GetActive() == true)
-		{
-			score++;
-			bullet_.SetActive(false);
-			ducks_.at(i).SetActive(false);
-		}
-		if (!ducks_.at(i).GetActive())
-			active_duck_count--;
-	}
-	// All ducks inactive, start next wave countdown
-	if (active_duck_count <= 0)
-	{
-		next_wave = true;
-		wave_timer += delta_time;
-		if (wave_timer > wave_delay)
-		{
-			next_wave = false;
-			SpawnWave();
-			wave_timer = 0.0f;
 		}
 	}
 }
