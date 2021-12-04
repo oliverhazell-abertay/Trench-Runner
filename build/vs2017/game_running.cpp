@@ -45,8 +45,11 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
 
 	// Enemy Init
-	enemy_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
-	enemy_.position_ = gef::Vector4(5.0f, 5.0f, 480.0f);
+	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
+	enemy_.set_mesh(mesh_);
+	//enemy_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
+	enemy_.position_ = gef::Vector4(5.0f, 5.0f, 490.0f);
+	enemy_.rotation_ = gef::Vector4(4.5f, 0.0f, 0.0f);
 	enemy_.material = primitive_builder_->blue_material();
 
 	// Init ground spawner
