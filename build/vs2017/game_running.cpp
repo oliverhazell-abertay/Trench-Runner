@@ -47,10 +47,10 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	// Enemy Init
 	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
 	enemy_.set_mesh(mesh_);
-	//enemy_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
-	enemy_.position_ = gef::Vector4(5.0f, 5.0f, 490.0f);
-	enemy_.rotation_ = gef::Vector4(4.5f, 0.0f, 0.0f);
+	enemy_.position_ = gef::Vector4(-10.0f, -15.0f, 530.0f);
+	enemy_.rotation_ = gef::Vector4(4.71f, 0.0f, 0.0f);
 	enemy_.material = primitive_builder_->blue_material();
+	enemy_.StartMoving(gef::Vector4(5.0f, 5.0f, 480.0f), 2.0f);
 
 	// Init ground spawner
 	const float grass_size_ = 300.0f;
@@ -118,6 +118,7 @@ void GameRunning::CleanUp()
 void GameRunning::Update(float delta_time)
 {
 	Input(delta_time);
+
 	// Update lasers
 	for(ALL_LASERS)
 	{
@@ -216,7 +217,7 @@ void GameRunning::SetupLights()
 {
 	gef::PointLight default_point_light;
 	default_point_light.set_colour(gef::Colour(0.7f, 0.7f, 1.0f, 1.0f));
-	default_point_light.set_position(gef::Vector4(-300.0f, -500.0f, 100.0f));
+	default_point_light.set_position(gef::Vector4(-300.0f, -500.0f, 600.0f));
 
 	gef::Default3DShaderData& default_shader_data = renderer_3d_->default_shader_data();
 	default_shader_data.set_ambient_light_colour(gef::Colour(0.5f, 0.5f, 0.5f, 1.0f));
@@ -339,37 +340,21 @@ void GameRunning::Input(float delta_time)
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_W))
 			{
 				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
-				/*if (!bullet_.GetMoving())
-				{
-					bullet_.position_.set_y(bullet_.position_.y() + (sensitivity * delta_time));
-				}*/
 			}
 			// Move left
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
 			{
 				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
-				/*if (!bullet_.GetMoving())
-				{
-					bullet_.position_.set_x(bullet_.position_.x() - (sensitivity * delta_time));
-				}*/
 			}
 			// Move down
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
 			{
 				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
-				/*if (!bullet_.GetMoving())
-				{
-					bullet_.position_.set_y(bullet_.position_.y() - (sensitivity * delta_time));
-				}*/
 			}
 			// Move right
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
 			{
 				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
-				/*if (!bullet_.GetMoving())
-				{
-					bullet_.position_.set_x(bullet_.position_.x() + (sensitivity * delta_time));
-				}*/
 			}
 			// Set cursor to new position based on input
 			cursor_.set_position(temp_pos_);
@@ -377,8 +362,6 @@ void GameRunning::Input(float delta_time)
 			// Shoot
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
 			{
-				/*bullet_.SetActive(true);
-				CastRayFromCamera(&bullet_);*/
 				Bullet* tempLaser;
 				tempLaser = new Bullet;
 				tempLaser->SetActive(true);
@@ -407,7 +390,7 @@ void GameRunning::CastRayFromCamera(Bullet* bullet)
 	float hh = platform_->height() * 0.5f;
 
 	ndc.x = (static_cast<float>(cursor_.position().x()) - hw) / hw;
-	ndc.y = (hh - static_cast<float>(cursor_.position().y())) / hh;
+	ndc.y = (hh - static_cast<float>(cursor_.position().y() - 10.0f)) / hh;
 
 	gef::Matrix44 projectionInverse;
 	projectionInverse.Inverse(renderer_3d_->view_matrix() * renderer_3d_->projection_matrix());
