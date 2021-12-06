@@ -51,7 +51,6 @@ void PrimitiveBuilder::CleanUp()
 	delete default_plane_mesh_;
 	default_plane_mesh_ = nullptr;
 
-
 	delete default_sphere_mesh_;
 	default_sphere_mesh_ = nullptr;
 

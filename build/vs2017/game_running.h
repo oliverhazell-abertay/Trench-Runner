@@ -56,6 +56,7 @@ private:
 	void Input(float delta_time);
 	void SetupLights();
 	void SetupCamera();
+	void UpdateLasers(float delta_time);
 
 	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
@@ -78,30 +79,24 @@ private:
 	float far_plane_;
 
 	// Game objects
-	Bullet bullet_;
 	std::vector<Bullet*> lasers_;
-	GameObject grass_;
-	Enemy enemy_;
+	GameObject floor_;
+	gef::Material floor_material;
+	GameObject left_wall_;
+	GameObject right_wall_;
+	Enemy* enemy_;
 
 	// UI
 	gef::Sprite cursor_;
 	gef::Texture* crosshair_;
 
 	// Wave management
-	bool next_wave = false;
-	float wave_timer = 0.0f;
-	float wave_delay = 5.0f;
-	int max_ducks = 5;
-	int active_duck_count = 0;
-	int wave_count = 0;
-	void SpawnWave();
 
 	// Score keeping
 	int score = 0;
 
+	// Shooting
 	int shootSpeed = 100;
-
-
 	void CastRayFromCamera(Bullet* bullet);
 
 	// AR

@@ -38,26 +38,36 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
 
-	// Player Init
-	bullet_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
-	gef::Vector4 translation(0.0f, 0.0f, 0.0f);
-	bullet_.position_ = translation;
-	bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
-
 	// Enemy Init
+	enemy_ = new Enemy;
 	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
-	enemy_.set_mesh(mesh_);
-	enemy_.position_ = gef::Vector4(-10.0f, -15.0f, 530.0f);
-	enemy_.rotation_ = gef::Vector4(4.71f, 0.0f, 0.0f);
-	enemy_.material = primitive_builder_->blue_material();
-	enemy_.StartMoving(gef::Vector4(5.0f, 5.0f, 480.0f), 2.0f);
+	enemy_->set_mesh(mesh_);
+	enemy_->position_ = gef::Vector4(-10.0f, -15.0f, 530.0f);
+	enemy_->rotation_ = gef::Vector4(4.71f, 0.0f, 0.0f);
+	enemy_->material = primitive_builder_->blue_material();
+	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 480.0f), 2.0f);
 
-	// Init ground spawner
-	const float grass_size_ = 300.0f;
-	grass_.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(1.0f, 1.0f, 1.0f)));
-	gef::Vector4 grass_translation_(0.0f, -100.0f, 0.0f);
-	grass_.position_ = grass_translation_;
-	grass_.scale_ = gef::Vector4(grass_size_, 1.0f, grass_size_);
+	// Init floor
+	const float floor_size_ = 1000.0f;
+	floor_material.set_texture(CreateTextureFromPNG("Wall.png", *platform));
+	floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
+	floor_.position_ = floor_translation_;
+	floor_.scale_ = gef::Vector4(floor_size_, 1.0f, floor_size_ * 3.0f);
+
+	// Init walls
+	const float wall_size_ = 1000.0f; 
+	left_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	right_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	gef::Vector4 wall_translation(-200.0f, 0.0f, 0.0f);
+	// Left wall
+	left_wall_.position_ = wall_translation;
+	left_wall_.scale_ = gef::Vector4(1.0f, 100.0f, wall_size_);
+	// Right wall
+	wall_translation = gef::Vector4(200.0f, 0.0f, 0.0f);
+	right_wall_.position_ = wall_translation;
+	right_wall_.scale_ = gef::Vector4(1.0f, 100.0f, wall_size_);
+
 
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
@@ -80,7 +90,6 @@ void GameRunning::OnEntry(Type prev_game_state)
 	if (prev_game_state != PAUSE)
 	{
 		score = 0;
-		wave_count = 0;
 	}
 	SetupCamera();
 	SetupLights();
@@ -113,41 +122,31 @@ void GameRunning::CleanUp()
 
 	delete primitive_builder_;
 	primitive_builder_ = NULL;
+
+	for (ALL_LASERS)
+	{
+		delete lasers_[laser_num];
+		lasers_[laser_num] = NULL;
+	}
+
+	delete enemy_;
+	enemy_ = NULL;
 }
 
 void GameRunning::Update(float delta_time)
 {
+	// Input
 	Input(delta_time);
-
 	// Update lasers
-	for(ALL_LASERS)
-	{
-		if (lasers_[laser_num]->GetActive())
-		{
-			lasers_.at(laser_num)->Update(delta_time);
-		}
-	}
-
-	for(ALL_LASERS)
-	{
-		if (IsColliding_AABBToAABB(*lasers_[laser_num], enemy_))
-		{
-			enemy_.material = primitive_builder_->red_material();
-		}
-	}
-
-	// floor update
-	grass_.Update(delta_time);
-	// Player update
-	bullet_.Update(delta_time);
+	UpdateLasers(delta_time);
+	// Floor update
+	floor_.Update(delta_time);
+	// Walls update
+	left_wall_.Update(delta_time);
+	right_wall_.Update(delta_time);
 	// Enemy update
-	enemy_.Update(delta_time);
-
-	//// Win condition
-	//if (score > 10 || wave_count >= 5)
-	//{
-	//	signal_to_change = GAMEOVER;
-	//}
+	if (enemy_)
+		enemy_->Update(delta_time);
 }
 
 void GameRunning::Render()
@@ -168,15 +167,17 @@ void GameRunning::Render()
 	// Begin rendering 3D meshes
 	renderer_3d_->Begin();
 		// Draw floor
-		renderer_3d_->DrawMesh(grass_);
+		renderer_3d_->set_override_material(&floor_material);
+		renderer_3d_->DrawMesh(floor_);
+		// Draw walls
+		renderer_3d_->set_override_material(&floor_material);
+		renderer_3d_->DrawMesh(left_wall_);
+		renderer_3d_->DrawMesh(right_wall_);
 		// Draw Enemy
-		renderer_3d_->set_override_material(&enemy_.material);
-		renderer_3d_->DrawMesh(enemy_);
-		//Draw player
-		if (bullet_.GetActive())
+		if (enemy_)
 		{
-			renderer_3d_->set_override_material(&primitive_builder_->red_material());
-			renderer_3d_->DrawMesh(bullet_);
+			renderer_3d_->set_override_material(&enemy_->material);
+			renderer_3d_->DrawMesh(*enemy_);
 		}
 		// Draw lasers
 		for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
@@ -187,6 +188,7 @@ void GameRunning::Render()
 				renderer_3d_->DrawMesh(*lasers_.at(laser_num));
 			}
 		}
+	// Reset override material
 	renderer_3d_->set_override_material(NULL);
 	renderer_3d_->End();
 
@@ -309,24 +311,6 @@ void GameRunning::Input(float delta_time)
 	{
 		input_manager_->Update();
 
-		// controller input
-		gef::SonyControllerInputManager* controller_manager = input_manager_->controller_input();
-		if (controller_manager)
-		{
-			// Shoot
-			if (controller_manager->GetController(0)->buttons_down() == gef_SONY_CTRL_R2)
-			{
-				bullet_.SetActive(true);
-				bullet_.position_ = gef::Vector4(0.0f, 0.0f, 0.0f);
-				bullet_.velocity_ = gef::Vector4(0.0f, 0.0f, -10.0f);
-			}
-			// Pause
-			if (controller_manager->GetController(0)->buttons_down() == gef_SONY_CTRL_START)
-			{
-				signal_to_change = PAUSE;
-			}
-		}
-
 		// keyboard input
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
@@ -375,6 +359,32 @@ void GameRunning::Input(float delta_time)
 				signal_to_change = PAUSE;
 			}
 		}
+	}
+}
+
+void GameRunning::UpdateLasers(float delta_time)
+{
+	// Update lasers
+	for (ALL_LASERS)
+	{
+		if (lasers_[laser_num]->GetActive())
+		{
+			lasers_.at(laser_num)->Update(delta_time);
+		}
+	}
+	// Check for collisions
+	for (ALL_LASERS)
+	{
+		if (IsColliding_AABBToAABB(*lasers_[laser_num], *enemy_))
+		{
+			//enemy_.material = primitive_builder_->red_material();
+			enemy_->MarkForDeletion(true);
+		}
+	}
+	if (enemy_->ToBeDeleted())
+	{
+		enemy_->position_ = camera_eye_;
+		enemy_->position_.set_z(enemy_->position_.z() + 100.0f);
 	}
 }
 

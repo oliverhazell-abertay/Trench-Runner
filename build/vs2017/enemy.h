@@ -10,6 +10,8 @@ public:
 	bool Update(float frame_time);
 	void MoveToTarget(float delta_time);
 	void StartMoving(gef::Vector4 target, float moveDuration);
+	inline void MarkForDeletion(bool mark) { toBeDeleted = mark; }
+	inline bool ToBeDeleted() { return toBeDeleted; }
 
 	gef::Material material;
 
