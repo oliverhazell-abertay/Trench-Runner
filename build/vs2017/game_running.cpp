@@ -22,6 +22,7 @@
 #define SCREEN_CENTRE_X 480.0f
 #define SCREEN_CENTRE_Y 272.0f
 #define ALL_LASERS int laser_num = 0; laser_num < lasers_.size(); laser_num++
+#define ALL_WALLS int wall_num = 0; wall_num < 5; wall_num++
 
 GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Renderer3D* rend_3d_, gef::InputManager* in_) :
 	platform_(platform),
@@ -48,25 +49,44 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 480.0f), 2.0f);
 
 	// Init floor
-	const float floor_size_ = 1000.0f;
 	floor_material.set_texture(CreateTextureFromPNG("Wall.png", *platform));
-	floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-	gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
-	floor_.position_ = floor_translation_;
-	floor_.scale_ = gef::Vector4(floor_size_, 1.0f, floor_size_ * 3.0f);
-
+	for (ALL_WALLS)
+	{
+		GameObject* tempFloor;
+		tempFloor = new GameObject;
+		tempFloor->set_mesh(primitive_builder_->GetDefaultCubeMesh());
+		gef::Vector4 floor_translation_(0.0f, -100.0f, wall_size_ * wall_num * -1);
+		tempFloor->position_ = floor_translation_;
+		tempFloor->scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
+		tempFloor->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+		floors_.push_back(tempFloor);
+	}
 	// Init walls
-	const float wall_size_ = 1000.0f; 
-	left_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-	right_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-	gef::Vector4 wall_translation(-200.0f, 0.0f, 0.0f);
+	gef::Vector4 wall_translation;
 	// Left wall
-	left_wall_.position_ = wall_translation;
-	left_wall_.scale_ = gef::Vector4(1.0f, 100.0f, wall_size_);
-	// Right wall
-	wall_translation = gef::Vector4(200.0f, 0.0f, 0.0f);
-	right_wall_.position_ = wall_translation;
-	right_wall_.scale_ = gef::Vector4(1.0f, 100.0f, wall_size_);
+	for (ALL_WALLS)
+	{
+		GameObject* tempWall;
+		tempWall = new GameObject;
+		tempWall->set_mesh(primitive_builder_->GetDefaultCubeMesh());
+		wall_translation = gef::Vector4(-200.0f, 0.0f, wall_size_ * wall_num * -1);
+		tempWall->position_ = wall_translation;
+		tempWall->scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
+		tempWall->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+		left_walls_.push_back(tempWall);
+	}
+	// Right walls
+	for (ALL_WALLS)
+	{
+		GameObject* tempWall;
+		tempWall = new GameObject;
+		tempWall->set_mesh(primitive_builder_->GetDefaultCubeMesh());
+		wall_translation = gef::Vector4(200.0f, 0.0f, wall_size_ * wall_num * -1);
+		tempWall->position_ = wall_translation;
+		tempWall->scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
+		tempWall->velocity_ = gef::Vector4(0.0f, 0.0f, 300.0f);
+		right_walls_.push_back(tempWall);
+	}
 
 
 	// Init cursor
@@ -131,6 +151,16 @@ void GameRunning::CleanUp()
 
 	delete enemy_;
 	enemy_ = NULL;
+
+	for (ALL_WALLS)
+	{
+		delete left_walls_[wall_num];
+		left_walls_[wall_num] = NULL;
+		delete right_walls_[wall_num];
+		right_walls_[wall_num] = NULL;
+		delete floors_[wall_num];
+		floors_[wall_num] = NULL;
+	}
 }
 
 void GameRunning::Update(float delta_time)
@@ -139,11 +169,8 @@ void GameRunning::Update(float delta_time)
 	Input(delta_time);
 	// Update lasers
 	UpdateLasers(delta_time);
-	// Floor update
-	floor_.Update(delta_time);
 	// Walls update
-	left_wall_.Update(delta_time);
-	right_wall_.Update(delta_time);
+	UpdateWalls(delta_time);
 	// Enemy update
 	if (enemy_)
 		enemy_->Update(delta_time);
@@ -168,11 +195,17 @@ void GameRunning::Render()
 	renderer_3d_->Begin();
 		// Draw floor
 		renderer_3d_->set_override_material(&floor_material);
-		renderer_3d_->DrawMesh(floor_);
+		for (ALL_WALLS)
+		{
+			renderer_3d_->DrawMesh(*floors_[wall_num]);
+		}
 		// Draw walls
 		renderer_3d_->set_override_material(&floor_material);
-		renderer_3d_->DrawMesh(left_wall_);
-		renderer_3d_->DrawMesh(right_wall_);
+		for (ALL_WALLS)
+		{
+			renderer_3d_->DrawMesh(*left_walls_[wall_num]);
+			renderer_3d_->DrawMesh(*right_walls_[wall_num]);
+		}
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -218,8 +251,8 @@ void GameRunning::DrawHUD()
 void GameRunning::SetupLights()
 {
 	gef::PointLight default_point_light;
-	default_point_light.set_colour(gef::Colour(0.7f, 0.7f, 1.0f, 1.0f));
-	default_point_light.set_position(gef::Vector4(-300.0f, -500.0f, 600.0f));
+	default_point_light.set_colour(gef::Colour(0.7f, 0.7f, 0.7f, 1.0f));
+	default_point_light.set_position(gef::Vector4(0.0f, -500.0f, 600.0f));
 
 	gef::Default3DShaderData& default_shader_data = renderer_3d_->default_shader_data();
 	default_shader_data.set_ambient_light_colour(gef::Colour(0.5f, 0.5f, 0.5f, 1.0f));
@@ -385,6 +418,34 @@ void GameRunning::UpdateLasers(float delta_time)
 	{
 		enemy_->position_ = camera_eye_;
 		enemy_->position_.set_z(enemy_->position_.z() + 100.0f);
+	}
+}
+
+void GameRunning::UpdateWalls(float delta_time)
+{
+	// Left walls
+	for (ALL_WALLS)
+	{
+		left_walls_[wall_num]->Update(delta_time);
+		// If wall is off camera, put to the start of the treadmill
+		if (left_walls_[wall_num]->position_.z() > 1000.0f)
+			left_walls_[wall_num]->position_.set_z((left_walls_.size() - 1) * (wall_size_ * -1));
+	}
+	// Right walls
+	for (ALL_WALLS)
+	{
+		right_walls_[wall_num]->Update(delta_time);
+		// If wall is off camera, put to the start of the treadmill
+		if (right_walls_[wall_num]->position_.z() > 1000.0f)
+			right_walls_[wall_num]->position_.set_z((right_walls_.size() - 1) * (wall_size_ * -1));
+	}
+	// Floor
+	for (ALL_WALLS)
+	{
+		floors_[wall_num]->Update(delta_time);
+		// If wall is off camera, put to the start of the treadmill
+		if (floors_[wall_num]->position_.z() > 1000.0f)
+			floors_[wall_num]->position_.set_z((floors_.size() - 1) * (wall_size_ * -1));
 	}
 }
 

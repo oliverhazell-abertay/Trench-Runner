@@ -57,6 +57,7 @@ private:
 	void SetupLights();
 	void SetupCamera();
 	void UpdateLasers(float delta_time);
+	void UpdateWalls(float delta_time);
 
 	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
@@ -80,15 +81,19 @@ private:
 
 	// Game objects
 	std::vector<Bullet*> lasers_;
-	GameObject floor_;
+	std::vector<GameObject*> floors_;
 	gef::Material floor_material;
-	GameObject left_wall_;
-	GameObject right_wall_;
+	std::vector<GameObject*> left_walls_;
+	std::vector<GameObject*> right_walls_;
 	Enemy* enemy_;
 
 	// UI
 	gef::Sprite cursor_;
 	gef::Texture* crosshair_;
+
+	// Treadmill management
+	const float wall_size_ = 1000.0f;
+	float scroll_speed_ = 300.0f;
 
 	// Wave management
 
