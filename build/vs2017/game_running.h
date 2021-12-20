@@ -70,6 +70,7 @@ private:
 
 	// Game logic
 	bool isColliding = false;
+	void Fire();
 
 	// Camera
 	gef::Vector4 camera_eye_;
@@ -81,10 +82,10 @@ private:
 
 	// Game objects
 	std::vector<Bullet*> lasers_;
-	std::vector<GameObject*> floors_;
+	GameObject floor_;
 	gef::Material floor_material;
-	std::vector<GameObject*> left_walls_;
-	std::vector<GameObject*> right_walls_;
+	GameObject left_wall_;
+	GameObject right_wall_;
 	Enemy* enemy_;
 
 	// UI
@@ -92,8 +93,8 @@ private:
 	gef::Texture* crosshair_;
 
 	// Treadmill management
-	const float wall_size_ = 1000.0f;
-	float scroll_speed_ = 300.0f;
+	const float wall_size_ = 5000.0f;
+	float scroll_speed_ = 200.0f;
 
 	// Wave management
 

@@ -16,7 +16,10 @@ gef::Texture* CreateTextureFromPNG(const char* png_filename, gef::Platform& plat
 
 	// if the image data is valid, then create a texture from it
 	if (image_data.image() != NULL)
+	{
+		//image_data.set_width(image_data.width() / 2);
 		texture = gef::Texture::Create(platform, image_data);
+	}
 
 	return texture;
 }

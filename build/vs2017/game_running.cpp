@@ -43,50 +43,36 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	enemy_ = new Enemy;
 	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
 	enemy_->set_mesh(mesh_);
+	enemy_->scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
 	enemy_->position_ = gef::Vector4(-10.0f, -15.0f, 530.0f);
 	enemy_->rotation_ = gef::Vector4(4.71f, 0.0f, 0.0f);
 	enemy_->material = primitive_builder_->blue_material();
-	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 480.0f), 2.0f);
+	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 400.0f), 2.0f);
 
 	// Init floor
-	floor_material.set_texture(CreateTextureFromPNG("Wall.png", *platform));
+	floor_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
 	for (ALL_WALLS)
 	{
-		GameObject* tempFloor;
-		tempFloor = new GameObject;
-		tempFloor->set_mesh(primitive_builder_->GetDefaultCubeMesh());
-		gef::Vector4 floor_translation_(0.0f, -100.0f, wall_size_ * wall_num * -1);
-		tempFloor->position_ = floor_translation_;
-		tempFloor->scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
-		tempFloor->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
-		floors_.push_back(tempFloor);
+		floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+		gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
+		floor_.position_ = floor_translation_;
+		floor_.scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
+		floor_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	}
 	// Init walls
 	gef::Vector4 wall_translation;
 	// Left wall
-	for (ALL_WALLS)
-	{
-		GameObject* tempWall;
-		tempWall = new GameObject;
-		tempWall->set_mesh(primitive_builder_->GetDefaultCubeMesh());
-		wall_translation = gef::Vector4(-200.0f, 0.0f, wall_size_ * wall_num * -1);
-		tempWall->position_ = wall_translation;
-		tempWall->scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
-		tempWall->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
-		left_walls_.push_back(tempWall);
-	}
+	left_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	wall_translation = gef::Vector4(-200.0f, 0.0f, 0.0f);
+	left_wall_.position_ = wall_translation;
+	left_wall_.scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
+	left_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	// Right walls
-	for (ALL_WALLS)
-	{
-		GameObject* tempWall;
-		tempWall = new GameObject;
-		tempWall->set_mesh(primitive_builder_->GetDefaultCubeMesh());
-		wall_translation = gef::Vector4(200.0f, 0.0f, wall_size_ * wall_num * -1);
-		tempWall->position_ = wall_translation;
-		tempWall->scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
-		tempWall->velocity_ = gef::Vector4(0.0f, 0.0f, 300.0f);
-		right_walls_.push_back(tempWall);
-	}
+	right_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	wall_translation = gef::Vector4(200.0f, 0.0f, 0.0f);
+	right_wall_.position_ = wall_translation;
+	right_wall_.scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
+	right_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 
 
 	// Init cursor
@@ -151,16 +137,6 @@ void GameRunning::CleanUp()
 
 	delete enemy_;
 	enemy_ = NULL;
-
-	for (ALL_WALLS)
-	{
-		delete left_walls_[wall_num];
-		left_walls_[wall_num] = NULL;
-		delete right_walls_[wall_num];
-		right_walls_[wall_num] = NULL;
-		delete floors_[wall_num];
-		floors_[wall_num] = NULL;
-	}
 }
 
 void GameRunning::Update(float delta_time)
@@ -193,19 +169,11 @@ void GameRunning::Render()
 
 	// Begin rendering 3D meshes
 	renderer_3d_->Begin();
-		// Draw floor
-		renderer_3d_->set_override_material(&floor_material);
-		for (ALL_WALLS)
-		{
-			renderer_3d_->DrawMesh(*floors_[wall_num]);
-		}
 		// Draw walls
 		renderer_3d_->set_override_material(&floor_material);
-		for (ALL_WALLS)
-		{
-			renderer_3d_->DrawMesh(*left_walls_[wall_num]);
-			renderer_3d_->DrawMesh(*right_walls_[wall_num]);
-		}
+		renderer_3d_->DrawMesh(floor_);
+		renderer_3d_->DrawMesh(left_wall_);
+		renderer_3d_->DrawMesh(right_wall_);
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -352,11 +320,12 @@ void GameRunning::Input(float delta_time)
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
 				sensitivity = 100;
 			// Get cursor current position
-			gef::Vector4 temp_pos_ = cursor_.position();
+			gef::Vector4 temp_pos_ = camera_eye_;
+			//gef::Vector4 temp_pos_ = cursor_.position();
 			// Move up
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_W))
 			{
-				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
+				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
 			}
 			// Move left
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
@@ -366,7 +335,7 @@ void GameRunning::Input(float delta_time)
 			// Move down
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
 			{
-				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
+				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
 			}
 			// Move right
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
@@ -374,17 +343,15 @@ void GameRunning::Input(float delta_time)
 				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
 			}
 			// Set cursor to new position based on input
-			cursor_.set_position(temp_pos_);
+			//cursor_.set_position(temp_pos_);
+			camera_eye_ = temp_pos_;
+			temp_pos_.set_z(temp_pos_.z() - 1.0f);
+			camera_lookat_ = temp_pos_;
 
 			// Shoot
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
 			{
-				Bullet* tempLaser;
-				tempLaser = new Bullet;
-				tempLaser->SetActive(true);
-				tempLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
-				CastRayFromCamera(tempLaser);
-				lasers_.push_back(tempLaser);
+				Fire();
 			}
 			// Pause
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_P))
@@ -393,6 +360,29 @@ void GameRunning::Input(float delta_time)
 			}
 		}
 	}
+}
+
+void GameRunning::Fire()
+{
+	// Left Laser
+	Bullet* tempLeftLaser;
+	tempLeftLaser = new Bullet;
+	tempLeftLaser->SetActive(true);
+	tempLeftLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
+	CastRayFromCamera(tempLeftLaser);
+	tempLeftLaser->position_.set_x(tempLeftLaser->position_.x() - 1.5f);
+	tempLeftLaser->position_.set_y(tempLeftLaser->position_.y() - 1.0f);
+	lasers_.push_back(tempLeftLaser);
+
+	// Right Laser
+	Bullet* tempRightLaser;
+	tempRightLaser = new Bullet;
+	tempRightLaser->SetActive(true);
+	tempRightLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
+	CastRayFromCamera(tempRightLaser);
+	tempRightLaser->position_.set_x(tempRightLaser->position_.x() + 1.5f);
+	tempRightLaser->position_.set_y(tempRightLaser->position_.y() - 1.0f);
+	lasers_.push_back(tempRightLaser);
 }
 
 void GameRunning::UpdateLasers(float delta_time)
@@ -424,29 +414,22 @@ void GameRunning::UpdateLasers(float delta_time)
 void GameRunning::UpdateWalls(float delta_time)
 {
 	// Left walls
-	for (ALL_WALLS)
-	{
-		left_walls_[wall_num]->Update(delta_time);
-		// If wall is off camera, put to the start of the treadmill
-		if (left_walls_[wall_num]->position_.z() > 1000.0f)
-			left_walls_[wall_num]->position_.set_z((left_walls_.size() - 1) * (wall_size_ * -1));
-	}
+	left_wall_.Update(delta_time);
+	// If wall is off camera, put to the start of the treadmill
+	if (left_wall_.position_.z() > 500.0f)
+		left_wall_.position_.set_z(0.0f);
+
 	// Right walls
-	for (ALL_WALLS)
-	{
-		right_walls_[wall_num]->Update(delta_time);
-		// If wall is off camera, put to the start of the treadmill
-		if (right_walls_[wall_num]->position_.z() > 1000.0f)
-			right_walls_[wall_num]->position_.set_z((right_walls_.size() - 1) * (wall_size_ * -1));
-	}
+	right_wall_.Update(delta_time);
+	// If wall is off camera, put to the start of the treadmill
+	if (right_wall_.position_.z() > 500.0f)
+		right_wall_.position_.set_z(0.0f);
+
 	// Floor
-	for (ALL_WALLS)
-	{
-		floors_[wall_num]->Update(delta_time);
-		// If wall is off camera, put to the start of the treadmill
-		if (floors_[wall_num]->position_.z() > 1000.0f)
-			floors_[wall_num]->position_.set_z((floors_.size() - 1) * (wall_size_ * -1));
-	}
+	floor_.Update(delta_time);
+	// If wall is off camera, put to the start of the treadmill
+	if (floor_.position_.z() > 500.0f)
+		floor_.position_.set_z(0.0f);
 }
 
 // https://antongerdelan.net/opengl/raycasting.html
@@ -478,7 +461,6 @@ void GameRunning::CastRayFromCamera(Bullet* bullet)
 	direction = nearPoint - farPoint;
 	direction.Normalise();
 
-	startPoint.set_y(startPoint.y() - 0.5f);
 	bullet->position_ = startPoint;
 	bullet->velocity_ = direction * shootSpeed;
 }
