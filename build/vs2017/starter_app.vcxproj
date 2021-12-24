@@ -226,6 +226,7 @@
     <ClCompile Include="game_state.cpp" />
     <ClCompile Include="menu.cpp" />
     <ClCompile Include="paused.cpp" />
+    <ClCompile Include="player.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\game_object.h" />
@@ -239,6 +240,7 @@
     <ClInclude Include="game_state.h" />
     <ClInclude Include="menu.h" />
     <ClInclude Include="paused.h" />
+    <ClInclude Include="player.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

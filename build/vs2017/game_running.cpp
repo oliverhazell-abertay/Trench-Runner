@@ -39,6 +39,11 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
 
+	// Player object init
+	player_.player_object.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	player_.player_object.position_ = camera_eye_;
+	player_.player_object.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
+
 	// Enemy Init
 	enemy_ = new Enemy;
 	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
@@ -73,7 +78,6 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	right_wall_.position_ = wall_translation;
 	right_wall_.scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
 	right_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
-
 
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
@@ -143,6 +147,11 @@ void GameRunning::Update(float delta_time)
 {
 	// Input
 	Input(delta_time);
+	// Update Player
+	player_.Update(delta_time);
+	player_.player_object.position_ = camera_eye_;
+	if (IsColliding_AABBToAABB(player_.player_object, left_wall_))
+		signal_to_change = GAMEOVER;
 	// Update lasers
 	UpdateLasers(delta_time);
 	// Walls update

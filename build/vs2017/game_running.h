@@ -12,6 +12,7 @@
 #include "game_object.h"
 #include "load_texture.h"
 #include "bullet.h"
+#include "player.h"
 #include "enemy.h"
 
 //// Vita AR includes
@@ -82,6 +83,7 @@ private:
 
 	// Game objects
 	std::vector<Bullet*> lasers_;
+	Player player_;
 	GameObject floor_;
 	gef::Material floor_material;
 	GameObject left_wall_;
