@@ -148,10 +148,16 @@ void GameRunning::Update(float delta_time)
 	// Input
 	Input(delta_time);
 	// Update Player
-	player_.Update(delta_time);
 	player_.player_object.position_ = camera_eye_;
-	if (IsColliding_AABBToAABB(player_.player_object, left_wall_))
+	player_.Update(delta_time);
+
+	// collision detection with walls
+	if (IsColliding_AABBToAABB(player_.player_object, left_wall_)
+			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
+				|| IsColliding_AABBToAABB(player_.player_object, floor_))
+	{
 		signal_to_change = GAMEOVER;
+	}
 	// Update lasers
 	UpdateLasers(delta_time);
 	// Walls update
