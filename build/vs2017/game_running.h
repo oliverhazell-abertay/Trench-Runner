@@ -88,6 +88,7 @@ private:
 	gef::Material floor_material;
 	GameObject left_wall_;
 	GameObject right_wall_;
+	GameObject pillar_;
 	Enemy* enemy_;
 
 	// UI

@@ -79,6 +79,12 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	right_wall_.scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
 	right_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 
+	// Pillar init
+	pillar_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	pillar_.position_ = gef::Vector4(0.0f, 0.0f, -500.0f);
+	pillar_.scale_ = gef::Vector4(400.0f, 66.7f, 50.0f);
+	pillar_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
 	cursor_.set_texture(crosshair_);
@@ -154,7 +160,8 @@ void GameRunning::Update(float delta_time)
 	// collision detection with walls
 	if (IsColliding_AABBToAABB(player_.player_object, left_wall_)
 			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
-				|| IsColliding_AABBToAABB(player_.player_object, floor_))
+				|| IsColliding_AABBToAABB(player_.player_object, floor_)
+					|| IsColliding_AABBToAABB(player_.player_object, pillar_))
 	{
 		signal_to_change = GAMEOVER;
 	}
@@ -162,6 +169,8 @@ void GameRunning::Update(float delta_time)
 	UpdateLasers(delta_time);
 	// Walls update
 	UpdateWalls(delta_time);
+	// Pillar update
+	pillar_.Update(delta_time);
 	// Enemy update
 	if (enemy_)
 		enemy_->Update(delta_time);
@@ -189,6 +198,8 @@ void GameRunning::Render()
 		renderer_3d_->DrawMesh(floor_);
 		renderer_3d_->DrawMesh(left_wall_);
 		renderer_3d_->DrawMesh(right_wall_);
+		//Draw pillar
+		renderer_3d_->DrawMesh(pillar_);
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -338,7 +349,7 @@ void GameRunning::Input(float delta_time)
 			gef::Vector4 temp_pos_ = camera_eye_;
 			//gef::Vector4 temp_pos_ = cursor_.position();
 			// Move up
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_W))
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_W) && player_.player_object.position_.y() < 100.0f)
 			{
 				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
 			}
