@@ -2,15 +2,35 @@
 #include "maths/math_utils.h"
 #include <cmath>
 
-Enemy::Enemy()
+Enemy::Enemy(PrimitiveBuilder* prim)
 {
+	primitive_builder_ = prim;
 	Init();
 }
 
 void Enemy::Init()
 {
-	targetPos = position_;
-	startPos = position_;
+	targetPos = position;
+	startPos = position;
+
+	// Cockpit init
+	cockpit_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
+	cockpit_.position_ = position;
+	cockpit_.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
+
+	// Left wing init
+	left_wing_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	left_wing_.position_ = position;
+	left_wing_.scale_ = gef::Vector4(1.0f, 15.0f, 10.0f);
+	left_wing_.position_.set_x(position.x() - (cockpit_.scale_.x() / 2) - (left_wing_.scale_.x() / 2));
+
+	// Right wing init
+	right_wing_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	right_wing_.position_ = position;
+	right_wing_.scale_ = gef::Vector4(1.0f, 15.0f, 10.0f);
+	right_wing_.position_.set_x(position.x() + (cockpit_.scale_.x() / 2) + (right_wing_.scale_.x() / 2));
+	
+	material = primitive_builder_->blue_material();
 }
 
 bool Enemy::Update(float delta_time)
@@ -18,13 +38,31 @@ bool Enemy::Update(float delta_time)
 	if (moving)
 		MoveToTarget(delta_time);
 
-	GameObject::Update(delta_time);
+	// Update positions
+	cockpit_.position_ = position;
+	left_wing_.position_ = position;
+	right_wing_.position_ = position;
+
+	// Adjust wing positions
+	left_wing_.position_.set_x(position.x() - (cockpit_.scale_.x() / 2) - (left_wing_.scale_.x() / 2));
+	right_wing_.position_.set_x(position.x() + (cockpit_.scale_.x() / 2) + (right_wing_.scale_.x() / 2));
+
+	// Update objects
+	cockpit_.Update(delta_time);
+	left_wing_.Update(delta_time);
+	right_wing_.Update(delta_time);
+
 	return true;
+}
+
+void Enemy::ScaleObjects(gef::Vector4 scale)
+{
+	//cockpit_.scale_ = cockpit_.scale_ * scale;
 }
 
 void Enemy::StartMoving(gef::Vector4 target, float moveDuration)
 {
-	startPos = position_;
+	startPos = position;
 	targetPos = target;
 	moveSpeed = moveDuration;
 	moving = true;
@@ -35,9 +73,9 @@ void Enemy::MoveToTarget(float delta_time)
 	lerpTimer += (delta_time / moveSpeed);
 	if (lerpTimer < 1.0f)
 	{
-		position_.set_x(gef::Lerp(startPos.x(), targetPos.x(), lerpTimer));
-		position_.set_y(gef::Lerp(startPos.y(), targetPos.y(), lerpTimer));
-		position_.set_z(gef::Lerp(startPos.z(), targetPos.z(), lerpTimer));
+		position.set_x(gef::Lerp(startPos.x(), targetPos.x(), lerpTimer));
+		position.set_y(gef::Lerp(startPos.y(), targetPos.y(), lerpTimer));
+		position.set_z(gef::Lerp(startPos.z(), targetPos.z(), lerpTimer));
 	}
 	else
 	{
@@ -45,15 +83,3 @@ void Enemy::MoveToTarget(float delta_time)
 		moving = false;
 	}
 }
-
-//float Enemy::DistanceBetweenTwoPoints(gef::Vector4 p1, gef::Vector4 p2)
-//{
-//	float distance = 0.0f;
-//	float sqrX = (p2.x() - p1.x()) * (p2.x() - p1.x());
-//	float sqrY = (p2.y() - p1.y()) * (p2.y() - p1.y());
-//	float sqrZ = (p2.z() - p1.z()) * (p2.z() - p1.z());
-//
-//	distance = sqrtf(sqrX + sqrY + sqrZ);
-//
-//	return distance;
-//}

@@ -1,10 +1,12 @@
 #pragma once
 #include "game_object.h"
 #include "graphics/material.h"
-class Enemy : public GameObject
+#include "primitive_builder.h"
+
+class Enemy
 {
 public:
-	Enemy();
+	Enemy(PrimitiveBuilder* prim);
 
 	void Init();
 	bool Update(float frame_time);
@@ -12,8 +14,13 @@ public:
 	void StartMoving(gef::Vector4 target, float moveDuration);
 	inline void MarkForDeletion(bool mark) { toBeDeleted = mark; }
 	inline bool ToBeDeleted() { return toBeDeleted; }
+	void ScaleObjects(gef::Vector4 scale);
 
 	gef::Material material;
+	GameObject cockpit_;
+	GameObject left_wing_;
+	GameObject right_wing_;
+	gef::Vector4 position;
 
 private:
 	bool moving = false;
@@ -23,5 +30,6 @@ private:
 	float lerpTimer = 0.0f;
 	float moveSpeed = 1.0f;
 
+	PrimitiveBuilder* primitive_builder_;
 };
 

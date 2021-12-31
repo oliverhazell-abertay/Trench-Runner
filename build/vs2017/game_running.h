@@ -105,7 +105,7 @@ private:
 	int score = 0;
 
 	// Shooting
-	int shootSpeed = 100;
+	int shootSpeed = 300;
 	void CastRayFromCamera(Bullet* bullet);
 
 	// AR

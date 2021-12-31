@@ -45,13 +45,8 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	player_.player_object.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
 
 	// Enemy Init
-	enemy_ = new Enemy;
-	ReadSceneAndAssignFirstMesh("ship.scn", &model_scene_, &mesh_);
-	enemy_->set_mesh(mesh_);
-	enemy_->scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
-	enemy_->position_ = gef::Vector4(-10.0f, -15.0f, 530.0f);
-	enemy_->rotation_ = gef::Vector4(4.71f, 0.0f, 0.0f);
-	enemy_->material = primitive_builder_->blue_material();
+	enemy_ = new Enemy(primitive_builder_);
+	enemy_->position = gef::Vector4(-10.0f, -15.0f, 530.0f);
 	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 400.0f), 2.0f);
 
 	// Init floor
@@ -204,7 +199,9 @@ void GameRunning::Render()
 		if (enemy_)
 		{
 			renderer_3d_->set_override_material(&enemy_->material);
-			renderer_3d_->DrawMesh(*enemy_);
+			renderer_3d_->DrawMesh(enemy_->cockpit_);
+			renderer_3d_->DrawMesh(enemy_->left_wing_);
+			renderer_3d_->DrawMesh(enemy_->right_wing_);
 		}
 		// Draw lasers
 		for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
@@ -342,7 +339,7 @@ void GameRunning::Input(float delta_time)
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
 		{
-			int sensitivity = 500;
+			int sensitivity = 250;
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
 				sensitivity = 100;
 			// Get cursor current position
@@ -424,7 +421,7 @@ void GameRunning::UpdateLasers(float delta_time)
 	// Check for collisions
 	for (ALL_LASERS)
 	{
-		if (IsColliding_AABBToAABB(*lasers_[laser_num], *enemy_))
+		if (IsColliding_AABBToAABB(*lasers_[laser_num], enemy_->cockpit_))
 		{
 			//enemy_.material = primitive_builder_->red_material();
 			enemy_->MarkForDeletion(true);
@@ -432,8 +429,8 @@ void GameRunning::UpdateLasers(float delta_time)
 	}
 	if (enemy_->ToBeDeleted())
 	{
-		enemy_->position_ = camera_eye_;
-		enemy_->position_.set_z(enemy_->position_.z() + 100.0f);
+		enemy_->position = camera_eye_;
+		enemy_->position.set_z(enemy_->position.z() + 100.0f);
 	}
 }
 
