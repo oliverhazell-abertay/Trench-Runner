@@ -335,6 +335,9 @@ void GameRunning::Input(float delta_time)
 	{
 		input_manager_->Update();
 
+		// Reset cursor
+		cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y, 0.0f));
+
 		// keyboard input
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
@@ -344,26 +347,29 @@ void GameRunning::Input(float delta_time)
 				sensitivity = 100;
 			// Get cursor current position
 			gef::Vector4 temp_pos_ = camera_eye_;
-			//gef::Vector4 temp_pos_ = cursor_.position();
 			// Move up
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_W) && player_.player_object.position_.y() < 100.0f)
 			{
 				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
+				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y - 10.0f, 0.0f));
 			}
 			// Move left
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
 			{
 				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
+				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X - 10.0f, SCREEN_CENTRE_Y, 0.0f));
 			}
 			// Move down
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
 			{
 				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
+				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y + 10.0f, 0.0f));
 			}
 			// Move right
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
 			{
 				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
+				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X + 10.0f, SCREEN_CENTRE_Y, 0.0f));
 			}
 			// Set cursor to new position based on input
 			//cursor_.set_position(temp_pos_);
@@ -391,20 +397,22 @@ void GameRunning::Fire()
 	Bullet* tempLeftLaser;
 	tempLeftLaser = new Bullet;
 	tempLeftLaser->SetActive(true);
-	tempLeftLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
-	CastRayFromCamera(tempLeftLaser);
-	tempLeftLaser->position_.set_x(tempLeftLaser->position_.x() - 1.5f);
-	tempLeftLaser->position_.set_y(tempLeftLaser->position_.y() - 1.0f);
+	tempLeftLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 10.0f)));
+	tempLeftLaser->position_ = camera_eye_;
+	tempLeftLaser->position_.set_x(camera_eye_.x() - 1.0f);
+	tempLeftLaser->position_.set_y(camera_eye_.y() - 1.0f);
+	tempLeftLaser->velocity_ = gef::Vector4(0.0f, 0.0f, shootSpeed * -1);
 	lasers_.push_back(tempLeftLaser);
 
 	// Right Laser
 	Bullet* tempRightLaser;
 	tempRightLaser = new Bullet;
 	tempRightLaser->SetActive(true);
-	tempRightLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 1.0f)));
-	CastRayFromCamera(tempRightLaser);
-	tempRightLaser->position_.set_x(tempRightLaser->position_.x() + 1.5f);
-	tempRightLaser->position_.set_y(tempRightLaser->position_.y() - 1.0f);
+	tempRightLaser->set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(0.1f, 0.1f, 10.0f)));
+	tempRightLaser->position_ = camera_eye_;
+	tempRightLaser->position_.set_x(camera_eye_.x() + 1.0f);
+	tempRightLaser->position_.set_y(camera_eye_.y() - 1.0f);
+	tempRightLaser->velocity_ = gef::Vector4(0.0f, 0.0f, shootSpeed * -1);
 	lasers_.push_back(tempRightLaser);
 }
 
