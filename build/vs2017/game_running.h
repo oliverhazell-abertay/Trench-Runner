@@ -15,6 +15,7 @@
 #include "player.h"
 #include "enemy.h"
 
+
 //// Vita AR includes
 //#include <camera.h>
 //#include <gxm.h>
@@ -59,6 +60,8 @@ private:
 	void SetupCamera();
 	void UpdateLasers(float delta_time);
 	void UpdateWalls(float delta_time);
+	void UpdatePillars(float delta_time);
+	void SpawnPillar(GameObject* nextPillar);
 
 	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
@@ -88,7 +91,7 @@ private:
 	gef::Material floor_material;
 	GameObject left_wall_;
 	GameObject right_wall_;
-	GameObject pillar_;
+	std::vector<GameObject*> pillars_;
 	Enemy* enemy_;
 
 	// UI
@@ -106,6 +109,7 @@ private:
 
 	// Shooting
 	int shootSpeed = 300;
+	float turn_tilt = 0.025f;
 	void CastRayFromCamera(Bullet* bullet);
 
 	// AR

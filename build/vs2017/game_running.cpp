@@ -22,7 +22,7 @@
 #define SCREEN_CENTRE_X 480.0f
 #define SCREEN_CENTRE_Y 272.0f
 #define ALL_LASERS int laser_num = 0; laser_num < lasers_.size(); laser_num++
-#define ALL_WALLS int wall_num = 0; wall_num < 5; wall_num++
+#define ALL_PILLARS int pillar_num = 0; pillar_num < pillars_.size(); pillar_num++
 
 GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Renderer3D* rend_3d_, gef::InputManager* in_) :
 	platform_(platform),
@@ -51,14 +51,11 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 
 	// Init floor
 	floor_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
-	for (ALL_WALLS)
-	{
-		floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-		gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
-		floor_.position_ = floor_translation_;
-		floor_.scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
-		floor_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
-	}
+	floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
+	floor_.position_ = floor_translation_;
+	floor_.scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
+	floor_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	// Init walls
 	gef::Vector4 wall_translation;
 	// Left wall
@@ -74,11 +71,22 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	right_wall_.scale_ = gef::Vector4(1.0f, 200.0f, wall_size_);
 	right_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 
-	// Pillar init
-	pillar_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-	pillar_.position_ = gef::Vector4(0.0f, 0.0f, -500.0f);
-	pillar_.scale_ = gef::Vector4(400.0f, 66.7f, 50.0f);
-	pillar_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+	// Pillars init
+	// Pillar 1
+	GameObject* tempPillar;
+	tempPillar = new GameObject;
+	tempPillar->set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	tempPillar->position_ = gef::Vector4(0.0f, 0.0f, -500.0f);
+	tempPillar->scale_ = gef::Vector4(400.0f, 66.7f, 50.0f);
+	tempPillar->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+	pillars_.push_back(tempPillar);
+	// Pillar 2
+	tempPillar = new GameObject;
+	tempPillar->set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	tempPillar->position_ = gef::Vector4(0.0f, 0.0f, -1000.0f);
+	tempPillar->scale_ = gef::Vector4(400.0f, 66.7f, 50.0f);
+	tempPillar->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
+	pillars_.push_back(tempPillar);
 
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
@@ -140,6 +148,12 @@ void GameRunning::CleanUp()
 		lasers_[laser_num] = NULL;
 	}
 
+	for (ALL_PILLARS)
+	{
+		delete pillars_[pillar_num];
+		pillars_[pillar_num] = NULL;
+	}
+
 	delete enemy_;
 	enemy_ = NULL;
 }
@@ -155,8 +169,7 @@ void GameRunning::Update(float delta_time)
 	// collision detection with walls
 	if (IsColliding_AABBToAABB(player_.player_object, left_wall_)
 			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
-				|| IsColliding_AABBToAABB(player_.player_object, floor_)
-					|| IsColliding_AABBToAABB(player_.player_object, pillar_))
+				|| IsColliding_AABBToAABB(player_.player_object, floor_))
 	{
 		signal_to_change = GAMEOVER;
 	}
@@ -165,7 +178,7 @@ void GameRunning::Update(float delta_time)
 	// Walls update
 	UpdateWalls(delta_time);
 	// Pillar update
-	pillar_.Update(delta_time);
+	UpdatePillars(delta_time);
 	// Enemy update
 	if (enemy_)
 		enemy_->Update(delta_time);
@@ -193,8 +206,18 @@ void GameRunning::Render()
 		renderer_3d_->DrawMesh(floor_);
 		renderer_3d_->DrawMesh(left_wall_);
 		renderer_3d_->DrawMesh(right_wall_);
-		//Draw pillar
-		renderer_3d_->DrawMesh(pillar_);
+		//Draw pillars
+		// If pillar 1 is closer, draw pillar 2 first
+		if (pillars_[0]->position_.z() > pillars_[1]->position_.z())
+		{
+			renderer_3d_->DrawMesh(*pillars_[1]);
+			renderer_3d_->DrawMesh(*pillars_[0]);
+		}
+		else
+		{
+			renderer_3d_->DrawMesh(*pillars_[0]);
+			renderer_3d_->DrawMesh(*pillars_[1]);
+		}
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -347,33 +370,33 @@ void GameRunning::Input(float delta_time)
 				sensitivity = 100;
 			// Get cursor current position
 			gef::Vector4 temp_pos_ = camera_eye_;
+			gef::Vector4 temp_rot_ = gef::Vector4(0.0f, 1.0f, 0.0f);
 			// Move up
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_W) && player_.player_object.position_.y() < 100.0f)
 			{
 				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
-				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y - 10.0f, 0.0f));
-			}
-			// Move left
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
-			{
-				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
-				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X - 10.0f, SCREEN_CENTRE_Y, 0.0f));
 			}
 			// Move down
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
 			{
 				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
-				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y + 10.0f, 0.0f));
+			}
+			// Move left
+			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
+			{
+				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
+				temp_rot_.set_x(turn_tilt * -1);
 			}
 			// Move right
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
 			{
 				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
-				cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X + 10.0f, SCREEN_CENTRE_Y, 0.0f));
+				temp_rot_.set_x(turn_tilt);
 			}
-			// Set cursor to new position based on input
-			//cursor_.set_position(temp_pos_);
+			// Set player position and rotation based on input
 			camera_eye_ = temp_pos_;
+			camera_up_ = temp_rot_;
+			// Keep camera looking straight forward
 			temp_pos_.set_z(temp_pos_.z() - 1.0f);
 			camera_lookat_ = temp_pos_;
 
@@ -439,6 +462,7 @@ void GameRunning::UpdateLasers(float delta_time)
 	{
 		enemy_->position = camera_eye_;
 		enemy_->position.set_z(enemy_->position.z() + 100.0f);
+		enemy_->alive = false;
 	}
 }
 
@@ -461,6 +485,29 @@ void GameRunning::UpdateWalls(float delta_time)
 	// If wall is off camera, put to the start of the treadmill
 	if (floor_.position_.z() > 500.0f)
 		floor_.position_.set_z(0.0f);
+}
+
+void GameRunning::UpdatePillars(float delta_time)
+{
+	for (ALL_PILLARS)
+	{
+		// Update pillar
+		pillars_[pillar_num]->Update(delta_time);
+		// Reset pillar if it has passed the player
+		if (pillars_[pillar_num]->position_.z() > 550.0f)
+		{
+			//pillars_[pillar_num]->position_.set_z(-1000.0f);
+			SpawnPillar(pillars_[pillar_num]);
+		}
+	}
+}
+
+void GameRunning::SpawnPillar(GameObject* nextPillar)
+{
+	// Random y
+	nextPillar->position_.set_y(rand() % 200 - 100);
+	// Spawn pillar far down track in front of player
+	nextPillar->position_.set_z(rand() % 500 - 1500);
 }
 
 // https://antongerdelan.net/opengl/raycasting.html

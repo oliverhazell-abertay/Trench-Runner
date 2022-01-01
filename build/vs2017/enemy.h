@@ -22,6 +22,8 @@ public:
 	GameObject right_wing_;
 	gef::Vector4 position;
 
+	bool alive = true;
+
 private:
 	bool moving = false;
 	bool toBeDeleted = false;

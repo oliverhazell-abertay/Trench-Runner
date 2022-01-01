@@ -35,8 +35,18 @@ void Enemy::Init()
 
 bool Enemy::Update(float delta_time)
 {
-	if (moving)
-		MoveToTarget(delta_time);
+	if (alive)
+	{
+		// If not at target, keep moving
+		if (moving)
+			MoveToTarget(delta_time);
+		// If at target, find random new target
+		if (!moving)
+		{
+			gef::Vector4 randTarget(rand() % 400 - 200, rand() % 200 - 100, 400.0f);
+			StartMoving(randTarget, 3.0f);
+		}
+	}
 
 	// Update positions
 	cockpit_.position_ = position;
