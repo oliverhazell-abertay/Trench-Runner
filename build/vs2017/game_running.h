@@ -105,7 +105,7 @@ private:
 	// Wave management
 
 	// Score keeping
-	int score = 0;
+	float score = 0;
 
 	// Shooting
 	int shootSpeed = 300;

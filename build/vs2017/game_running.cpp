@@ -109,8 +109,8 @@ void GameRunning::OnEntry(Type prev_game_state)
 	if (prev_game_state != PAUSE)
 	{
 		score = 0;
+		SetupCamera();
 	}
-	SetupCamera();
 	SetupLights();
 }
 
@@ -160,6 +160,8 @@ void GameRunning::CleanUp()
 
 void GameRunning::Update(float delta_time)
 {
+	// Score
+	score += delta_time * 5.5f;
 	// Input
 	Input(delta_time);
 	// Update Player
@@ -208,7 +210,7 @@ void GameRunning::Render()
 		renderer_3d_->DrawMesh(right_wall_);
 		//Draw pillars
 		// If pillar 1 is closer, draw pillar 2 first
-		if (pillars_[0]->position_.z() > pillars_[1]->position_.z())
+		/*if (pillars_[0]->position_.z() > pillars_[1]->position_.z())
 		{
 			renderer_3d_->DrawMesh(*pillars_[1]);
 			renderer_3d_->DrawMesh(*pillars_[0]);
@@ -217,7 +219,7 @@ void GameRunning::Render()
 		{
 			renderer_3d_->DrawMesh(*pillars_[0]);
 			renderer_3d_->DrawMesh(*pillars_[1]);
-		}
+		}*/
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -260,6 +262,11 @@ void GameRunning::DrawHUD()
 	}*/
 	// Draw cursor
 	sprite_renderer_->DrawSprite(cursor_);
+	// Draw Score
+	if (font_)
+	{
+		font_->RenderText(sprite_renderer_, gef::Vector4(0.0f, 0.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "Score: %.0f", score);
+	}
 }
 
 void GameRunning::SetupLights()
@@ -496,7 +503,6 @@ void GameRunning::UpdatePillars(float delta_time)
 		// Reset pillar if it has passed the player
 		if (pillars_[pillar_num]->position_.z() > 550.0f)
 		{
-			//pillars_[pillar_num]->position_.set_z(-1000.0f);
 			SpawnPillar(pillars_[pillar_num]);
 		}
 	}
