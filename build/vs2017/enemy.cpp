@@ -2,17 +2,15 @@
 #include "maths/math_utils.h"
 #include <cmath>
 
-Enemy::Enemy(PrimitiveBuilder* prim)
+Enemy::Enemy(PrimitiveBuilder* prim, gef::Vector4 initPos)
 {
 	primitive_builder_ = prim;
+	position = initPos;
 	Init();
 }
 
 void Enemy::Init()
 {
-	targetPos = position;
-	startPos = position;
-
 	// Cockpit init
 	cockpit_.set_mesh(primitive_builder_->GetDefaultSphereMesh());
 	cockpit_.position_ = position;
@@ -43,7 +41,7 @@ bool Enemy::Update(float delta_time)
 		// If at target, find random new target
 		if (!moving)
 		{
-			gef::Vector4 randTarget(rand() % 400 - 200, rand() % 200 - 100, 400.0f);
+			gef::Vector4 randTarget(rand() % 400 - 200, rand() % 200 - 100, 300.0f);
 			StartMoving(randTarget, 3.0f);
 		}
 	}
@@ -67,7 +65,19 @@ bool Enemy::Update(float delta_time)
 
 void Enemy::ScaleObjects(gef::Vector4 scale)
 {
-	//cockpit_.scale_ = cockpit_.scale_ * scale;
+	// Scale cockpit
+	cockpit_.scale_ = gef::Vector4(cockpit_.scale_.x() * scale.x(), 
+										cockpit_.scale_.y() * scale.y(),
+											cockpit_.scale_.z() * scale.z());
+	// Scale left wing
+	left_wing_.scale_ = gef::Vector4(left_wing_.scale_.x() * scale.x(),
+										left_wing_.scale_.y() * scale.y(),
+											left_wing_.scale_.z() * scale.z());
+
+	// Scale right wing
+	right_wing_.scale_ = gef::Vector4(right_wing_.scale_.x() * scale.x(),
+										right_wing_.scale_.y() * scale.y(),
+											right_wing_.scale_.z() * scale.z());
 }
 
 void Enemy::StartMoving(gef::Vector4 target, float moveDuration)

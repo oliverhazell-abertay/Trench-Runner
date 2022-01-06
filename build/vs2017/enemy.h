@@ -6,7 +6,7 @@
 class Enemy
 {
 public:
-	Enemy(PrimitiveBuilder* prim);
+	Enemy(PrimitiveBuilder* prim, gef::Vector4 initPos);
 
 	void Init();
 	bool Update(float frame_time);

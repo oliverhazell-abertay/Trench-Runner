@@ -8,6 +8,7 @@
 #include <maths/matrix44.h>
 #include <vector>
 #include <graphics/mesh_instance.h>
+#include <input/keyboard.h>
 #include "primitive_builder.h"
 #include "game_object.h"
 #include "load_texture.h"
@@ -62,6 +63,7 @@ private:
 	void UpdateWalls(float delta_time);
 	void UpdatePillars(float delta_time);
 	void SpawnPillar(GameObject* nextPillar);
+	void SpawnEnemy(gef::Vector4 initPos, gef::Vector4 initTarget);
 
 	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
@@ -75,6 +77,7 @@ private:
 	// Game logic
 	bool isColliding = false;
 	void Fire();
+	void Movement(gef::Keyboard* keyboard_);
 
 	// Camera
 	gef::Vector4 camera_eye_;
@@ -102,13 +105,16 @@ private:
 	const float wall_size_ = 5000.0f;
 	float scroll_speed_ = 200.0f;
 
-	// Wave management
-
 	// Score keeping
 	float score = 0;
 
+	// Movement
+	float moveSpeed = 5.0f;
+	float horDamping = 2.5f;
+	float vertDamping = 2.5f;
+
 	// Shooting
-	int shootSpeed = 300;
+	int shootSpeed = 600;
 	float turn_tilt = 0.025f;
 	void CastRayFromCamera(Bullet* bullet);
 

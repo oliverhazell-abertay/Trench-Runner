@@ -7,7 +7,6 @@
 #include <maths/vector2.h>
 #include <input/input_manager.h>
 #include <input/sony_controller_input_manager.h>
-#include <input/keyboard.h>
 #include <maths/math_utils.h>
 #include <graphics/renderer_3d.h>
 #include <graphics/scene.h>
@@ -45,9 +44,9 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	player_.player_object.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
 
 	// Enemy Init
-	enemy_ = new Enemy(primitive_builder_);
-	enemy_->position = gef::Vector4(-10.0f, -15.0f, 530.0f);
-	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 400.0f), 2.0f);
+	enemy_ = new Enemy(primitive_builder_, gef::Vector4(-10.0f, -15.0f, 530.0f));
+	enemy_->ScaleObjects(gef::Vector4(2.0f, 2.0f, 2.0f));
+	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 300.0f), 2.0f);
 
 	// Init floor
 	floor_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
@@ -165,7 +164,6 @@ void GameRunning::Update(float delta_time)
 	// Input
 	Input(delta_time);
 	// Update Player
-	player_.player_object.position_ = camera_eye_;
 	player_.Update(delta_time);
 
 	// collision detection with walls
@@ -175,6 +173,9 @@ void GameRunning::Update(float delta_time)
 	{
 		signal_to_change = GAMEOVER;
 	}
+	// Upper bounds check
+	if (player_.player_object.position_.y() > 100.0f)
+		player_.player_object.position_.set_y(100.0f);
 	// Update lasers
 	UpdateLasers(delta_time);
 	// Walls update
@@ -289,6 +290,9 @@ void GameRunning::SetupCamera()
 	camera_fov_ = gef::DegToRad(45.0f);
 	near_plane_ = 0.01f;
 	far_plane_ = 100.f;
+
+	// Initialise play position at camera
+	player_.player_object.position_ = camera_eye_;
 }
 
 gef::Mesh* GameRunning::GetFirstMesh(gef::Scene* scene)
@@ -375,38 +379,6 @@ void GameRunning::Input(float delta_time)
 			int sensitivity = 250;
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
 				sensitivity = 100;
-			// Get cursor current position
-			gef::Vector4 temp_pos_ = camera_eye_;
-			gef::Vector4 temp_rot_ = gef::Vector4(0.0f, 1.0f, 0.0f);
-			// Move up
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_W) && player_.player_object.position_.y() < 100.0f)
-			{
-				temp_pos_.set_y(temp_pos_.y() + (sensitivity * delta_time));
-			}
-			// Move down
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_S))
-			{
-				temp_pos_.set_y(temp_pos_.y() - (sensitivity * delta_time));
-			}
-			// Move left
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_A))
-			{
-				temp_pos_.set_x(temp_pos_.x() - (sensitivity * delta_time));
-				temp_rot_.set_x(turn_tilt * -1);
-			}
-			// Move right
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_D))
-			{
-				temp_pos_.set_x(temp_pos_.x() + (sensitivity * delta_time));
-				temp_rot_.set_x(turn_tilt);
-			}
-			// Set player position and rotation based on input
-			camera_eye_ = temp_pos_;
-			camera_up_ = temp_rot_;
-			// Keep camera looking straight forward
-			temp_pos_.set_z(temp_pos_.z() - 1.0f);
-			camera_lookat_ = temp_pos_;
-
 			// Shoot
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
 			{
@@ -417,6 +389,8 @@ void GameRunning::Input(float delta_time)
 			{
 				signal_to_change = PAUSE;
 			}
+			// Movement
+			Movement(keyboard);
 		}
 	}
 }
@@ -431,7 +405,7 @@ void GameRunning::Fire()
 	tempLeftLaser->position_ = camera_eye_;
 	tempLeftLaser->position_.set_x(camera_eye_.x() - 1.0f);
 	tempLeftLaser->position_.set_y(camera_eye_.y() - 1.0f);
-	tempLeftLaser->velocity_ = gef::Vector4(0.0f, 0.0f, shootSpeed * -1);
+	tempLeftLaser->velocity_ = gef::Vector4(0.0f, 0.0f, (float)shootSpeed * -1);
 	lasers_.push_back(tempLeftLaser);
 
 	// Right Laser
@@ -442,8 +416,59 @@ void GameRunning::Fire()
 	tempRightLaser->position_ = camera_eye_;
 	tempRightLaser->position_.set_x(camera_eye_.x() + 1.0f);
 	tempRightLaser->position_.set_y(camera_eye_.y() - 1.0f);
-	tempRightLaser->velocity_ = gef::Vector4(0.0f, 0.0f, shootSpeed * -1);
+	tempRightLaser->velocity_ = gef::Vector4(0.0f, 0.0f, (float)shootSpeed * -1);
 	lasers_.push_back(tempRightLaser);
+}
+
+void GameRunning::Movement(gef::Keyboard* keyboard_)
+{
+	// Set default rotation
+	gef::Vector4 temp_rot_ = gef::Vector4(0.0f, 1.0f, 0.0f);
+	// Get and store player current velocity
+	gef::Vector4 temp_velocity = player_.player_object.velocity_;
+	// Move up
+	if (keyboard_->IsKeyDown(gef::Keyboard::KC_W))
+	{
+		temp_velocity.set_y(temp_velocity.y() + moveSpeed);
+	}
+	// Move down
+	if (keyboard_->IsKeyDown(gef::Keyboard::KC_S))
+	{
+		temp_velocity.set_y(temp_velocity.y() - moveSpeed);
+	}
+	// Move left
+	if (keyboard_->IsKeyDown(gef::Keyboard::KC_A))
+	{
+		temp_velocity.set_x(temp_velocity.x() - moveSpeed);
+		temp_rot_.set_x(turn_tilt * -1);
+	}
+	// Move right
+	if (keyboard_->IsKeyDown(gef::Keyboard::KC_D))
+	{
+		temp_velocity.set_x(temp_velocity.x() + moveSpeed);
+		temp_rot_.set_x(turn_tilt);
+	}
+	// Work out direction player is headed
+	int horDirection = 0;
+	int vertDirection = 0;
+	horDirection = (temp_velocity.x() > 0) ? -1 : 1;
+	vertDirection = (temp_velocity.y() > 0) ? -1 : 1;
+	// Damping
+	if(player_.player_object.velocity_.x() != 0.0f)	// Only dampen if player is moving
+		temp_velocity.set_x(temp_velocity.x() + (horDamping * horDirection));
+	if(player_.player_object.velocity_.y() != 0.0f) // Only dampen if player is moving
+		temp_velocity.set_y(temp_velocity.y() + (vertDamping * vertDirection));
+
+	// Update player velocity based on input
+	player_.player_object.velocity_ = temp_velocity;
+
+	// Set camera to player position and rotation based on input
+	camera_eye_ = player_.player_object.position_;
+	camera_up_ = temp_rot_;
+	// Keep camera looking straight forward
+	camera_lookat_ = player_.player_object.position_;
+	camera_lookat_.set_z(camera_lookat_.z() - 1.0f);
+
 }
 
 void GameRunning::UpdateLasers(float delta_time)
@@ -459,17 +484,35 @@ void GameRunning::UpdateLasers(float delta_time)
 	// Check for collisions
 	for (ALL_LASERS)
 	{
-		if (IsColliding_AABBToAABB(*lasers_[laser_num], enemy_->cockpit_))
+		// If laser is active
+		if (lasers_[laser_num]->GetActive())
 		{
-			//enemy_.material = primitive_builder_->red_material();
-			enemy_->MarkForDeletion(true);
+			// If laser hit pillar
+			if (IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[0])
+				|| IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[1]))
+			{
+				// Delete laser
+				lasers_[laser_num]->SetActive(false);
+			}
+			// If laser hit enemy object
+			if (IsColliding_AABBToAABB(*lasers_[laser_num], enemy_->cockpit_))
+			{
+				// Delete laser
+				lasers_[laser_num]->SetActive(false);
+				// Mark enemy for deletion
+				enemy_->material = primitive_builder_->red_material();
+				enemy_->MarkForDeletion(true);
+			}
 		}
 	}
+	// "Delete" enemy by moving enemy behind camera
 	if (enemy_->ToBeDeleted())
 	{
 		enemy_->position = camera_eye_;
 		enemy_->position.set_z(enemy_->position.z() + 100.0f);
 		enemy_->alive = false;
+		enemy_->MarkForDeletion(false);
+		SpawnEnemy(gef::Vector4(-10.0f, -15.0f, 530.0f), gef::Vector4(5.0f, 5.0f, 300.0f));
 	}
 }
 
@@ -511,9 +554,17 @@ void GameRunning::UpdatePillars(float delta_time)
 void GameRunning::SpawnPillar(GameObject* nextPillar)
 {
 	// Random y
-	nextPillar->position_.set_y(rand() % 200 - 100);
+	nextPillar->position_.set_y((float)(rand() % 200 - 100));
 	// Spawn pillar far down track in front of player
-	nextPillar->position_.set_z(rand() % 500 - 1500);
+	nextPillar->position_.set_z((float)(rand() % 500 - 1500));
+}
+
+void GameRunning::SpawnEnemy(gef::Vector4 initPos, gef::Vector4 initTarget)
+{
+	enemy_->material = primitive_builder_->blue_material();
+	enemy_->position = gef::Vector4(-10.0f, -15.0f, 530.0f);
+	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 300.0f), 2.0f);
+	enemy_->alive = true;
 }
 
 // https://antongerdelan.net/opengl/raycasting.html
