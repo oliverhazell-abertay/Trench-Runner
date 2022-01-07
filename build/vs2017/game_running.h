@@ -94,6 +94,7 @@ private:
 	gef::Material floor_material;
 	GameObject left_wall_;
 	GameObject right_wall_;
+	gef::Material wall_material;
 	std::vector<GameObject*> pillars_;
 	Enemy* enemy_;
 

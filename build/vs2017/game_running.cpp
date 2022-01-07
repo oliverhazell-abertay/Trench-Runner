@@ -49,14 +49,15 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 300.0f), 2.0f);
 
 	// Init floor
-	floor_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
+	floor_material.set_texture(CreateTextureFromPNG("floor_big.png", *platform));
 	floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
 	floor_.position_ = floor_translation_;
-	floor_.scale_ = gef::Vector4(wall_size_, 1.0f, wall_size_);
+	floor_.scale_ = gef::Vector4(wall_size_ / 10, 1.0f, wall_size_);
 	floor_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	// Init walls
 	gef::Vector4 wall_translation;
+	wall_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
 	// Left wall
 	left_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	wall_translation = gef::Vector4(-200.0f, 0.0f, 0.0f);
@@ -171,7 +172,7 @@ void GameRunning::Update(float delta_time)
 			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
 				|| IsColliding_AABBToAABB(player_.player_object, floor_))
 	{
-		signal_to_change = GAMEOVER;
+		//signal_to_change = GAMEOVER;
 	}
 	// Upper bounds check
 	if (player_.player_object.position_.y() > 100.0f)
@@ -204,9 +205,11 @@ void GameRunning::Render()
 
 	// Begin rendering 3D meshes
 	renderer_3d_->Begin();
-		// Draw walls
+		// Draw Floor
 		renderer_3d_->set_override_material(&floor_material);
 		renderer_3d_->DrawMesh(floor_);
+		// Draw walls
+		renderer_3d_->set_override_material(&wall_material);
 		renderer_3d_->DrawMesh(left_wall_);
 		renderer_3d_->DrawMesh(right_wall_);
 		//Draw pillars
