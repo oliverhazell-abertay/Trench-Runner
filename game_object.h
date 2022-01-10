@@ -11,6 +11,7 @@ public:
 
 	gef::Vector4 position_;
 	gef::Vector4 velocity_;
+	gef::Vector4 rotational_velocity_;
 	gef::Vector4 scale_;
 	gef::Vector4 rotation_;
 	void BuildTransform();

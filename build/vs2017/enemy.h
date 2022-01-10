@@ -2,6 +2,7 @@
 #include "game_object.h"
 #include "graphics/material.h"
 #include "primitive_builder.h"
+#include <vector>
 
 class Enemy
 {
@@ -9,6 +10,8 @@ public:
 	Enemy(PrimitiveBuilder* prim, gef::Vector4 initPos);
 
 	void Init();
+	void CleanUp();
+	void Reset();
 	bool Update(float frame_time);
 	void MoveToTarget(float delta_time);
 	void StartMoving(gef::Vector4 target, float moveDuration);
@@ -21,6 +24,13 @@ public:
 	GameObject left_wing_;
 	GameObject right_wing_;
 	gef::Vector4 position;
+
+	std::vector<GameObject*> gibs_;
+	void SpawnGibs();
+	void BlowUp();
+	int gib_max = 10;
+	float gibTimer = 0.0f;
+	float gibTimerMax = 2.0f;
 
 	bool alive = true;
 

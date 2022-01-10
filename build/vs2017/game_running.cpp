@@ -22,6 +22,7 @@
 #define SCREEN_CENTRE_Y 272.0f
 #define ALL_LASERS int laser_num = 0; laser_num < lasers_.size(); laser_num++
 #define ALL_PILLARS int pillar_num = 0; pillar_num < pillars_.size(); pillar_num++
+#define ALL_GIBS int gib_num = 0; gib_num < enemy_->gibs_.size(); gib_num++
 
 GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Renderer3D* rend_3d_, gef::InputManager* in_) :
 	platform_(platform),
@@ -154,6 +155,7 @@ void GameRunning::CleanUp()
 		pillars_[pillar_num] = NULL;
 	}
 
+	enemy_->CleanUp();
 	delete enemy_;
 	enemy_ = NULL;
 }
@@ -170,9 +172,11 @@ void GameRunning::Update(float delta_time)
 	// collision detection with walls
 	if (IsColliding_AABBToAABB(player_.player_object, left_wall_)
 			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
-				|| IsColliding_AABBToAABB(player_.player_object, floor_))
+				|| IsColliding_AABBToAABB(player_.player_object, floor_)
+					|| IsColliding_AABBToAABB(player_.player_object, *pillars_[0])
+						|| IsColliding_AABBToAABB(player_.player_object, *pillars_[1]))
 	{
-		//signal_to_change = GAMEOVER;
+		signal_to_change = GAMEOVER;
 	}
 	// Upper bounds check
 	if (player_.player_object.position_.y() > 100.0f)
@@ -185,7 +189,20 @@ void GameRunning::Update(float delta_time)
 	UpdatePillars(delta_time);
 	// Enemy update
 	if (enemy_)
+	{
 		enemy_->Update(delta_time);
+		// If enemy is dead, increment timer to next enemy spawn
+		if (!enemy_->alive)
+		{
+			enemy_spawn_timer += delta_time;
+			// If timer is done, spawn enemy
+			if (enemy_spawn_timer > enemy_spawn_max)
+			{
+				SpawnEnemy(gef::Vector4(rand() % 500 - 250, rand() % 100 - 50, camera_eye_.z() + 100.0f), gef::Vector4(rand() % 500 - 250, rand() % 100 - 50, 300.0f));
+				enemy_spawn_timer = 0;
+			}
+		}
+	}
 }
 
 void GameRunning::Render()
@@ -202,7 +219,6 @@ void GameRunning::Render()
 	view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 	renderer_3d_->set_projection_matrix(projection_matrix);
 	renderer_3d_->set_view_matrix(view_matrix);
-
 	// Begin rendering 3D meshes
 	renderer_3d_->Begin();
 		// Draw Floor
@@ -214,7 +230,7 @@ void GameRunning::Render()
 		renderer_3d_->DrawMesh(right_wall_);
 		//Draw pillars
 		// If pillar 1 is closer, draw pillar 2 first
-		/*if (pillars_[0]->position_.z() > pillars_[1]->position_.z())
+		if (pillars_[0]->position_.z() > pillars_[1]->position_.z())
 		{
 			renderer_3d_->DrawMesh(*pillars_[1]);
 			renderer_3d_->DrawMesh(*pillars_[0]);
@@ -223,7 +239,7 @@ void GameRunning::Render()
 		{
 			renderer_3d_->DrawMesh(*pillars_[0]);
 			renderer_3d_->DrawMesh(*pillars_[1]);
-		}*/
+		}
 		// Draw Enemy
 		if (enemy_)
 		{
@@ -231,6 +247,23 @@ void GameRunning::Render()
 			renderer_3d_->DrawMesh(enemy_->cockpit_);
 			renderer_3d_->DrawMesh(enemy_->left_wing_);
 			renderer_3d_->DrawMesh(enemy_->right_wing_);
+			if (enemy_->alive == false)
+			{
+				for (ALL_GIBS)
+				{
+					// Check gib is active
+					if (enemy_->gibs_[gib_num]->GetActive())
+					{
+						// Random colour between yellow and red
+						if (rand() % 2 == 1)
+							renderer_3d_->set_override_material(&primitive_builder_->yellow_material());
+						else
+							renderer_3d_->set_override_material(&primitive_builder_->red_material());
+						// Render gib
+						renderer_3d_->DrawMesh(*enemy_->gibs_[gib_num]);
+					}
+				}
+			}
 		}
 		// Draw lasers
 		for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
@@ -502,20 +535,10 @@ void GameRunning::UpdateLasers(float delta_time)
 			{
 				// Delete laser
 				lasers_[laser_num]->SetActive(false);
-				// Mark enemy for deletion
-				enemy_->material = primitive_builder_->red_material();
-				enemy_->MarkForDeletion(true);
+				// Kill enemy
+				enemy_->BlowUp();
 			}
 		}
-	}
-	// "Delete" enemy by moving enemy behind camera
-	if (enemy_->ToBeDeleted())
-	{
-		enemy_->position = camera_eye_;
-		enemy_->position.set_z(enemy_->position.z() + 100.0f);
-		enemy_->alive = false;
-		enemy_->MarkForDeletion(false);
-		SpawnEnemy(gef::Vector4(-10.0f, -15.0f, 530.0f), gef::Vector4(5.0f, 5.0f, 300.0f));
 	}
 }
 
@@ -564,9 +587,10 @@ void GameRunning::SpawnPillar(GameObject* nextPillar)
 
 void GameRunning::SpawnEnemy(gef::Vector4 initPos, gef::Vector4 initTarget)
 {
+	enemy_->Reset();
 	enemy_->material = primitive_builder_->blue_material();
-	enemy_->position = gef::Vector4(-10.0f, -15.0f, 530.0f);
-	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 300.0f), 2.0f);
+	enemy_->position = initPos;
+	enemy_->StartMoving(initTarget, 2.0f);
 	enemy_->alive = true;
 }
 

@@ -108,6 +108,8 @@ private:
 
 	// Score keeping
 	float score = 0;
+	float enemy_spawn_timer = 0.0f;
+	float enemy_spawn_max = 3.0f;
 
 	// Movement
 	float moveSpeed = 5.0f;

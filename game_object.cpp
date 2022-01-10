@@ -10,6 +10,7 @@ void GameObject::Init()
 	position_ = gef::Vector4(0.0f, 0.0f, 0.0f);
 	rotation_ = gef::Vector4(0.0f, 0.0f, 0.0f);
 	velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
+	rotational_velocity_ = gef::Vector4(0.0f, 0.0f, 0.0f);
 	scale_ = gef::Vector4(1.0f, 1.0f, 1.0f);
 
 	active = true;
@@ -18,6 +19,7 @@ void GameObject::Init()
 bool GameObject::Update(float frame_time)
 {
 	position_ += velocity_ * frame_time;
+	rotation_ += rotational_velocity_ * frame_time;
 
 	BuildTransform();
 	return true;
