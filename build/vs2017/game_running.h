@@ -96,6 +96,8 @@ private:
 	GameObject right_wall_;
 	gef::Material wall_material;
 	std::vector<GameObject*> pillars_;
+	gef::Material pillar_material;
+	int closest_pillar_ = 0;
 	Enemy* enemy_;
 
 	// UI
@@ -104,7 +106,7 @@ private:
 
 	// Treadmill management
 	const float wall_size_ = 5000.0f;
-	float scroll_speed_ = 200.0f;
+	float scroll_speed_ = 220.0f;
 
 	// Score keeping
 	float score = 0;
