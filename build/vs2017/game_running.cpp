@@ -40,9 +40,10 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
 
 	// Player object init
-	player_.player_object.set_mesh(primitive_builder_->GetDefaultCubeMesh());
-	player_.player_object.position_ = camera_eye_;
-	player_.player_object.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
+	player_ = new Player(primitive_builder_);
+	player_->player_object.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	player_->player_object.position_ = camera_eye_;
+	player_->player_object.scale_ = gef::Vector4(10.0f, 10.0f, 10.0f);
 
 	// Enemy Init
 	enemy_ = new Enemy(primitive_builder_, gef::Vector4(-10.0f, -15.0f, 530.0f));
@@ -154,6 +155,10 @@ void GameRunning::CleanUp()
 	enemy_->CleanUp();
 	delete enemy_;
 	enemy_ = NULL;
+
+	player_->CleanUp();
+	delete player_;
+	player_ = NULL;
 }
 
 void GameRunning::Update(float delta_time)
@@ -164,20 +169,12 @@ void GameRunning::Update(float delta_time)
 	// Input
 	Input(delta_time);
 	// Update Player
-	player_.Update(delta_time);
+	player_->Update(delta_time);
 
-	// collision detection with walls and pillars
-	if (IsColliding_AABBToAABB(player_.player_object, left_wall_)
-			|| IsColliding_AABBToAABB(player_.player_object, right_wall_)
-				|| IsColliding_AABBToAABB(player_.player_object, floor_)
-					|| IsColliding_AABBToAABB(player_.player_object, *pillars_[0])
-						|| IsColliding_AABBToAABB(player_.player_object, *pillars_[1]))
-	{
-		signal_to_change = GAMEOVER;
-	}
+	
 	// Upper bounds check
-	if (player_.player_object.position_.y() > 100.0f)
-		player_.player_object.position_.set_y(100.0f);
+	if (player_->player_object.position_.y() > 100.0f)
+		player_->player_object.position_.set_y(100.0f);
 	// Update lasers
 	UpdateLasers(delta_time);
 	// Walls update
@@ -200,6 +197,8 @@ void GameRunning::Update(float delta_time)
 			}
 		}
 	}
+	if (!player_->alive)
+		GameOverTransition(delta_time);
 }
 
 void GameRunning::Render()
@@ -265,6 +264,24 @@ void GameRunning::Render()
 				}
 			}
 		}
+		// Draw dead player
+		if (!player_->alive)
+		{
+			for (ALL_GIBS)
+			{
+				// Check gib is active
+				if (player_->gibs_[gib_num]->GetActive())
+				{
+					// Random colour between yellow and red
+					if (rand() % 2 == 1)
+						renderer_3d_->set_override_material(&primitive_builder_->yellow_material());
+					else
+						renderer_3d_->set_override_material(&primitive_builder_->red_material());
+					// Render gib
+					renderer_3d_->DrawMesh(*player_->gibs_[gib_num]);
+				}
+			}
+		}
 		// Draw lasers
 		for (int laser_num = 0; laser_num < lasers_.size(); laser_num++)
 		{
@@ -323,7 +340,7 @@ void GameRunning::SetupCamera()
 	far_plane_ = 100.f;
 
 	// Initialise play position at camera
-	player_.player_object.position_ = camera_eye_;
+	player_->player_object.position_ = camera_eye_;
 }
 
 gef::Mesh* GameRunning::GetFirstMesh(gef::Scene* scene)
@@ -411,7 +428,7 @@ void GameRunning::Input(float delta_time)
 			if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
 				sensitivity = 100;
 			// Shoot
-			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE)) //&& !bullet_.GetMoving())
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE))
 			{
 				Fire();
 			}
@@ -456,7 +473,7 @@ void GameRunning::Movement(gef::Keyboard* keyboard_)
 	// Set default rotation
 	gef::Vector4 temp_rot_ = gef::Vector4(0.0f, 1.0f, 0.0f);
 	// Get and store player current velocity
-	gef::Vector4 temp_velocity = player_.player_object.velocity_;
+	gef::Vector4 temp_velocity = player_->player_object.velocity_;
 	// Move up
 	if (keyboard_->IsKeyDown(gef::Keyboard::KC_W))
 	{
@@ -485,19 +502,19 @@ void GameRunning::Movement(gef::Keyboard* keyboard_)
 	horDirection = (temp_velocity.x() > 0) ? -1 : 1;
 	vertDirection = (temp_velocity.y() > 0) ? -1 : 1;
 	// Damping
-	if(player_.player_object.velocity_.x() != 0.0f)	// Only dampen if player is moving
+	if(player_->player_object.velocity_.x() != 0.0f)	// Only dampen if player is moving
 		temp_velocity.set_x(temp_velocity.x() + (horDamping * horDirection));
-	if(player_.player_object.velocity_.y() != 0.0f) // Only dampen if player is moving
+	if(player_->player_object.velocity_.y() != 0.0f) // Only dampen if player is moving
 		temp_velocity.set_y(temp_velocity.y() + (vertDamping * vertDirection));
 
 	// Update player velocity based on input
-	player_.player_object.velocity_ = temp_velocity;
+	player_->player_object.velocity_ = temp_velocity;
 
 	// Set camera to player position and rotation based on input
-	camera_eye_ = player_.player_object.position_;
+	camera_eye_ = player_->player_object.position_;
 	camera_up_ = temp_rot_;
 	// Keep camera looking straight forward
-	camera_lookat_ = player_.player_object.position_;
+	camera_lookat_ = player_->player_object.position_;
 	camera_lookat_.set_z(camera_lookat_.z() - 1.0f);
 
 }
@@ -520,7 +537,9 @@ void GameRunning::UpdateLasers(float delta_time)
 		{
 			// If laser hit pillar
 			if (IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[0])
-				|| IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[1]))
+				|| IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[1])
+					|| IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[2])
+						|| IsColliding_AABBToAABB(*lasers_[laser_num], *pillars_[3]))
 			{
 				// Delete laser
 				lasers_[laser_num]->SetActive(false);
@@ -540,6 +559,22 @@ void GameRunning::UpdateLasers(float delta_time)
 
 void GameRunning::UpdateWalls(float delta_time)
 {
+	// Collision detection with walls
+	if (IsColliding_AABBToAABB(player_->player_object, left_wall_)
+		|| IsColliding_AABBToAABB(player_->player_object, right_wall_)
+		|| IsColliding_AABBToAABB(player_->player_object, floor_))
+	{
+		if (player_->alive)
+		{
+			// Kill Player
+			player_->BlowUp(-1);
+			// Stop treadmill
+			scroll_speed_ = 0.0f;
+			// Make enemy carry on
+			enemy_->StartMoving(gef::Vector4(0.0f, 0.0f, -10000.0f), 10.0f);
+		}
+	}
+
 	// Left walls
 	left_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	left_wall_.Update(delta_time);
@@ -573,6 +608,16 @@ void GameRunning::UpdatePillars(float delta_time)
 		if (pillars_[pillar_num]->position_.z() > 550.0f)
 		{
 			SpawnPillar(pillars_[pillar_num]);
+		}
+		// Collision with player
+		if (IsColliding_AABBToAABB(player_->player_object, *pillars_[pillar_num]))
+		{
+			// Kill Player
+			player_->BlowUp(1);
+			// Stop treadmill
+			scroll_speed_ = 0.0f;
+			// Make enemy carry on
+			enemy_->StartMoving(gef::Vector4(0.0f, 0.0f, -10000.0f), 10.0f);
 		}
 	}
 }
@@ -630,4 +675,20 @@ void GameRunning::CastRayFromCamera(Bullet* bullet)
 
 	bullet->position_ = startPoint;
 	bullet->velocity_ = direction * shootSpeed;
+}
+
+void GameRunning::GameOverTransition(float delta_time)
+{
+	// If transition is still happening, update
+	if (gameOverTimer < gameOverTimerMax)
+	{
+		camera_up_.set_x(camera_up_.x() + 0.1f);
+		gameOverTimer += delta_time;
+	}
+	// If timer is done, change to game over state
+	if (gameOverTimer >= gameOverTimerMax)
+	{
+		signal_to_change = GAMEOVER;
+		gameOverTimer = 0.0f;
+	}
 }

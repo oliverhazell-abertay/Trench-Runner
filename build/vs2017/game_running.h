@@ -89,7 +89,7 @@ private:
 
 	// Game objects
 	std::vector<Bullet*> lasers_;
-	Player player_;
+	Player* player_;
 	GameObject floor_;
 	gef::Material floor_material;
 	GameObject left_wall_;
@@ -111,7 +111,12 @@ private:
 	// Score keeping
 	float score = 0;
 	float enemy_spawn_timer = 0.0f;
-	float enemy_spawn_max = 3.0f;
+	float enemy_spawn_max = 3.0f; 
+
+	// Game over
+	void GameOverTransition(float delta_time);
+	float gameOverTimer = 0.0f;
+	float gameOverTimerMax = 3.0f;
 
 	// Movement
 	float moveSpeed = 5.0f;
