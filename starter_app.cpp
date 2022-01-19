@@ -33,7 +33,7 @@ void StarterApp::Init()
 	SetupCamera();
 	SetupLights();
 	
-	game_states_[0] = new Menu(sprite_renderer_, input_manager_, font_);
+	game_states_[0] = new Menu(&platform_, sprite_renderer_, input_manager_, font_);
 	game_states_[1] = new GameRunning(&platform_, sprite_renderer_, renderer_3d_, input_manager_);
 	game_states_[2] = new Paused(sprite_renderer_, input_manager_, font_);
 	game_states_[3] = new GameOver(sprite_renderer_, input_manager_, font_);

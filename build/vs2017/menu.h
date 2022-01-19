@@ -6,6 +6,8 @@
 #include <graphics/mesh_instance.h>
 #include "primitive_builder.h"
 #include "game_object.h"
+#include "menu_object.h"
+#include "load_texture.h"
 
 
 namespace gef
@@ -22,7 +24,7 @@ namespace gef
 class Menu : public GameState
 {
 public:
-	Menu(gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font);
+	Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font);
 	~Menu();
 
 	virtual void OnEntry(Type prev_game_state) override;
@@ -30,8 +32,12 @@ public:
 	virtual void Update(float deltaTime) override;
 	virtual void Render() override;
 private:
+	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;
+	
+	MenuObject menu_buttons;
+	gef::Sprite logo;
 };
 

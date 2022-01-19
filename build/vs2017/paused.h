@@ -30,6 +30,7 @@ public:
 	virtual void Update(float deltaTime) override;
 	virtual void Render() override;
 private:
+	gef::Platform* platform_;
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;

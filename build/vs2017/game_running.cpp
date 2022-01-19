@@ -424,21 +424,26 @@ void GameRunning::Input(float delta_time)
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
 		{
-			int sensitivity = 250;
-			if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
-				sensitivity = 100;
-			// Shoot
-			if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE))
+			// Only take certain input when player is alive
+			if (player_->alive)
 			{
-				Fire();
+				// Move slower with shift held
+				int sensitivity = 250;
+				if (keyboard->IsKeyDown(gef::Keyboard::KC_LSHIFT))
+					sensitivity = 100;
+				// Shoot
+				if (keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE))
+				{
+					Fire();
+				}
+				// Movement
+				Movement(keyboard);
 			}
 			// Pause
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_P))
 			{
 				signal_to_change = PAUSE;
 			}
-			// Movement
-			Movement(keyboard);
 		}
 	}
 }

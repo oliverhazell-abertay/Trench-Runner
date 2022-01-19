@@ -225,8 +225,10 @@
     <ClCompile Include="game_running.cpp" />
     <ClCompile Include="game_state.cpp" />
     <ClCompile Include="menu.cpp" />
+    <ClCompile Include="menu_object.cpp" />
     <ClCompile Include="paused.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="ui_button.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\game_object.h" />
@@ -239,8 +241,10 @@
     <ClInclude Include="game_running.h" />
     <ClInclude Include="game_state.h" />
     <ClInclude Include="menu.h" />
+    <ClInclude Include="menu_object.h" />
     <ClInclude Include="paused.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="ui_button.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

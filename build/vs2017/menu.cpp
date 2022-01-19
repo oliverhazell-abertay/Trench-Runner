@@ -18,12 +18,37 @@
 #define SCREEN_CENTRE_X 480.0f
 #define SCREEN_CENTRE_Y 272.0f
 
-Menu::Menu(gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font) :
+Menu::Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font) :
+	platform_(platform),
 	sprite_renderer_(sprite_rend_),
 	input_manager_(in_),
 	font_(font)
 {
 	type_ = MENU;
+
+	// Buttons
+	menu_buttons.Init();
+	gef::Sprite tempSprite;
+	// Play button
+	tempSprite.set_width(120.0f);
+	tempSprite.set_height(60.0f);
+	tempSprite.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y + 120.0f, 0.0f));
+	tempSprite.set_texture(CreateTextureFromPNG("button_play_tex.png", *platform));
+	UIButton* tempButton = new UIButton(tempSprite);
+	menu_buttons.buttons_.push_back(tempButton);
+	// Options button
+	tempSprite.set_width(120.0f);
+	tempSprite.set_height(60.0f);
+	tempSprite.set_position(gef::Vector4(SCREEN_CENTRE_X, tempSprite.position().y() + 70.0f, 0.0f));
+	tempSprite.set_texture(CreateTextureFromPNG("button_main_menu_tex.png", *platform));
+	tempButton = new UIButton(tempSprite);
+	menu_buttons.buttons_.push_back(tempButton);
+
+	// Logo init
+	logo.set_width(576.0f);
+	logo.set_height(384.0f);
+	logo.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y - 100.0f, 0.0f));
+	logo.set_texture(CreateTextureFromPNG("logo_tex.png", *platform));
 }
 
 Menu::~Menu()
@@ -58,22 +83,35 @@ void Menu::Update(float deltaTime)
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
 		{
-			// Move up
-			if (keyboard->IsKeyPressed(gef::Keyboard::KC_W))
+			// Start game
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_G))
 			{
 				signal_to_change = GAMERUNNING;
 			}
+			// Move up
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_W))
+			{
+				menu_buttons.NextButton();
+			}
+			// Move down
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_S))
+			{
+				menu_buttons.PrevButton();
+			}
 		}
 	}
+	menu_buttons.Update(deltaTime);
 }
 
 void Menu::Render()
 {
 	sprite_renderer_->Begin();
-		if (font_)
+		// Render buttons
+		for (int button_num = 0; button_num < menu_buttons.buttons_.size(); button_num++)
 		{
-			// display frame rate
-			font_->RenderText(sprite_renderer_, gef::Vector4(480.0f, 260.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_CENTRE, "MENU");
+			sprite_renderer_->DrawSprite(menu_buttons.buttons_[button_num]->button_sprite);
 		}
+		// Render logo
+		sprite_renderer_->DrawSprite(logo);
 	sprite_renderer_->End();
 }
