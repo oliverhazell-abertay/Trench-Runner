@@ -99,6 +99,10 @@ private:
 	gef::Material pillar_material;
 	int closest_pillar_ = 0;
 	Enemy* enemy_;
+	GameObject sky_;
+	gef::Material skybox_black;
+	GameObject fog_;
+	gef::Material fog_colour;
 
 	// UI
 	gef::Sprite cursor_;

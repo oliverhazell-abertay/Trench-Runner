@@ -40,6 +40,7 @@ void Enemy::Init()
 	right_wing_.position_.set_x(position.x() + (cockpit_.scale_.x() / 2) + (right_wing_.scale_.x() / 2));
 	
 	material = primitive_builder_->blue_material();
+	material.set_colour(gef::Colour(1.0f, 0.45, 0.2f, 0.0f).GetRGBA());
 
 	// Gibs init
 	for (int gib_num = 0; gib_num < gib_max; gib_num++)

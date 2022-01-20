@@ -3,6 +3,7 @@
 #include "graphics/material.h"
 #include "primitive_builder.h"
 #include <vector>
+#include "graphics/colour.h"
 
 class Enemy
 {

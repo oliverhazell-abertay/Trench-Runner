@@ -94,6 +94,19 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	cursor_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y, 0.0f));
 	gef::Colour crosshair_colour_(0.0f, 1.0f, 0.0f, 1.0f);
 	cursor_.set_colour(crosshair_colour_.GetABGR());
+
+	// Init skybox
+	skybox_black.set_colour(gef::Colour(1.0f, 1.0f, 1.0f, 1.0f).GetRGBA());
+	skybox_black.set_texture(CreateTextureFromPNG("space.png", *platform));
+	sky_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	sky_.scale_ = gef::Vector4(10000.0f, 10000.0f, 1.0f);
+	sky_.position_ = gef::Vector4(0.0f, 0.0f, -5000.0f);
+
+	// Init fog of war
+	fog_colour.set_colour(gef::Colour(0.5f, 0.0f, 0.0f, 0.0f).GetRGBA());
+	fog_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
+	fog_.scale_ = gef::Vector4(400.0f, 200.0f, 1.0f);
+	fog_.position_ = gef::Vector4(0.0f, 0.0f, -1700.0f);
 }
 
 GameRunning::~GameRunning()
@@ -170,13 +183,15 @@ void GameRunning::Update(float delta_time)
 	Input(delta_time);
 	// Update Player
 	player_->Update(delta_time);
-
-	
 	// Upper bounds check
 	if (player_->player_object.position_.y() > 100.0f)
 		player_->player_object.position_.set_y(100.0f);
 	// Update lasers
 	UpdateLasers(delta_time);
+	// Update sky
+	sky_.Update(delta_time);
+	// Update fog
+	fog_.Update(delta_time);
 	// Walls update
 	UpdateWalls(delta_time);
 	// Pillar update
@@ -217,6 +232,9 @@ void GameRunning::Render()
 	renderer_3d_->set_view_matrix(view_matrix);
 	// Begin rendering 3D meshes
 	renderer_3d_->Begin();
+		// Draw Sky
+		renderer_3d_->set_override_material(&skybox_black);
+		renderer_3d_->DrawMesh(sky_);
 		// Draw Floor
 		renderer_3d_->set_override_material(&floor_material);
 		renderer_3d_->DrawMesh(floor_);
@@ -224,6 +242,9 @@ void GameRunning::Render()
 		renderer_3d_->set_override_material(&wall_material);
 		renderer_3d_->DrawMesh(left_wall_);
 		renderer_3d_->DrawMesh(right_wall_);
+		// Draw fog
+		renderer_3d_->set_override_material(&fog_colour);
+		renderer_3d_->DrawMesh(fog_);
 		//Draw pillars
 		renderer_3d_->set_override_material(&pillar_material);
 		// Render pillars in right order
@@ -617,12 +638,15 @@ void GameRunning::UpdatePillars(float delta_time)
 		// Collision with player
 		if (IsColliding_AABBToAABB(player_->player_object, *pillars_[pillar_num]))
 		{
-			// Kill Player
-			player_->BlowUp(1);
-			// Stop treadmill
-			scroll_speed_ = 0.0f;
-			// Make enemy carry on
-			enemy_->StartMoving(gef::Vector4(0.0f, 0.0f, -10000.0f), 10.0f);
+			if (player_->alive)
+			{
+				// Kill Player
+				player_->BlowUp(1);
+				// Stop treadmill
+				scroll_speed_ = 0.0f;
+				// Make enemy carry on
+				enemy_->StartMoving(gef::Vector4(0.0f, 0.0f, -10000.0f), 10.0f);
+			}
 		}
 	}
 }
@@ -643,7 +667,6 @@ void GameRunning::SpawnPillar(GameObject* nextPillar)
 void GameRunning::SpawnEnemy(gef::Vector4 initPos, gef::Vector4 initTarget)
 {
 	enemy_->Reset();
-	enemy_->material = primitive_builder_->blue_material();
 	enemy_->position = initPos;
 	enemy_->StartMoving(initTarget, 2.0f);
 	enemy_->alive = true;
