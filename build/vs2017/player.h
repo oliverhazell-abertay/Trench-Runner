@@ -15,8 +15,8 @@ public:
 	GameObject player_object;
 
 	std::vector<GameObject*> gibs_;
-	void SpawnGibs(int dir);
-	void BlowUp(int dir);
+	void SpawnGibs();
+	void BlowUp();
 	int gib_max = 10;
 	float gibTimer = 0.0f;
 	float gibTimerMax = 2.0f;

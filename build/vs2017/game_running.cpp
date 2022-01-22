@@ -107,6 +107,12 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	fog_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	fog_.scale_ = gef::Vector4(400.0f, 200.0f, 1.0f);
 	fog_.position_ = gef::Vector4(0.0f, 0.0f, -1700.0f);
+
+	// screen swipe init
+	screen_swipe_sprite.set_width(1200.0f);
+	screen_swipe_sprite.set_height(544.0f);
+	screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
+	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform));
 }
 
 GameRunning::~GameRunning()
@@ -176,7 +182,13 @@ void GameRunning::CleanUp()
 
 void GameRunning::Update(float delta_time)
 {
-	scroll_speed_ += delta_time * 4;
+	// Swipe to start
+	if (!gameStarted)
+		if (ScreenSwipe(delta_time, -1))
+			gameStarted = true;
+	// Increase scroll when player is alive
+	if (player_->alive)
+		scroll_speed_ += delta_time * 4;
 	// Score
 	score += delta_time * 5.5f;
 	// Input
@@ -337,6 +349,7 @@ void GameRunning::DrawHUD()
 	{
 		font_->RenderText(sprite_renderer_, gef::Vector4(0.0f, 0.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, "Score: %.0f", score);
 	}
+	sprite_renderer_->DrawSprite(screen_swipe_sprite);
 }
 
 void GameRunning::SetupLights()
@@ -593,7 +606,7 @@ void GameRunning::UpdateWalls(float delta_time)
 		if (player_->alive)
 		{
 			// Kill Player
-			player_->BlowUp(-1);
+			player_->BlowUp();
 			// Stop treadmill
 			scroll_speed_ = 0.0f;
 			// Make enemy carry on
@@ -641,7 +654,7 @@ void GameRunning::UpdatePillars(float delta_time)
 			if (player_->alive)
 			{
 				// Kill Player
-				player_->BlowUp(1);
+				player_->BlowUp();
 				// Stop treadmill
 				scroll_speed_ = 0.0f;
 				// Make enemy carry on
@@ -710,13 +723,60 @@ void GameRunning::GameOverTransition(float delta_time)
 	// If transition is still happening, update
 	if (gameOverTimer < gameOverTimerMax)
 	{
-		camera_up_.set_x(camera_up_.x() + 0.1f);
 		gameOverTimer += delta_time;
 	}
 	// If timer is done, change to game over state
 	if (gameOverTimer >= gameOverTimerMax)
 	{
-		signal_to_change = GAMEOVER;
-		gameOverTimer = 0.0f;
+		if (ScreenSwipe(delta_time, 1))
+		{
+			signal_to_change = GAMEOVER;
+			gameOverTimer = 0.0f;
+		}
+	}
+}
+
+// Right to left = 1, left to right = -1
+bool GameRunning::ScreenSwipe(float delta_time, int dir)
+{
+	// Swipe left to right
+	if (dir < 0)
+	{
+		// Flip sprite
+		screen_swipe_sprite.set_rotation(3.14f);
+		// If starting swipe, move off left of screen
+		if(!swipeMoving)
+			screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X - 50.0f, SCREEN_CENTRE_Y, 0.0f));
+		if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 1200.0f)
+		{
+			screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time), SCREEN_CENTRE_Y, 0.0f));
+			swipeMoving = true;
+			return false;
+		}
+		else
+		{
+			swipeMoving = false;
+			return true;
+		}
+	}
+	//Swipe right to left
+	if (dir > 0)
+	{
+		// Reset rotation
+		screen_swipe_sprite.set_rotation(0.0f);
+		// If starting swipe, move off right of screen
+		if (!swipeMoving)
+			screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
+		if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 50.0f)
+		{
+			screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time * dir), SCREEN_CENTRE_Y, 0.0f));
+			swipeMoving = true;
+			return false;
+		}
+		else
+		{
+			swipeMoving = false;
+			return true;
+		}
 	}
 }

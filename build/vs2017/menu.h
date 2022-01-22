@@ -36,8 +36,22 @@ private:
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;
+
+	// Background
+	void ScrollBG(float delta_time);
+	gef::Sprite BG;
+
+	// Screen swipe
+	void ScreenSwipe(float delta_time);
+	gef::Sprite screen_swipe_sprite;
+	bool transistion = false;
 	
 	MenuObject menu_buttons;
+
+	// Logo
 	gef::Sprite logo;
+	gef::Colour logo_colour;
+	bool pulseUp = false;
+	void PulseLogo(float delta_time);
 };
 

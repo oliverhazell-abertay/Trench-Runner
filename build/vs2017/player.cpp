@@ -55,19 +55,18 @@ bool Player::Update(float delta_time)
 	return true;
 }
 
-void Player::BlowUp(int dir)
+void Player::BlowUp()
 {
 	alive = false;
-	SpawnGibs(dir);
-	player_object.velocity_ = gef::Vector4(0.0f, 0.0f, 50.0f * dir);
+	SpawnGibs();
 }
 
-void Player::SpawnGibs(int dir)
+void Player::SpawnGibs()
 {
 	for (ALL_GIBS)
 	{
 		gibs_[gib_num]->SetActive(true);
-		gibs_[gib_num]->position_ = gef::Vector4(player_object.position_.x(), player_object.position_.y(), player_object.position_.z() - 2.0f);
-		gibs_[gib_num]->velocity_ = gef::Vector4((float)(rand() % 60 - 30), (float)(rand() % 60 - 30), 50.0f * dir);
+		gibs_[gib_num]->position_ = gef::Vector4(player_object.position_.x(), player_object.position_.y(), player_object.position_.z() -2.0f);
+		gibs_[gib_num]->velocity_ = gef::Vector4((float)(rand() % 60 - 30), (float)(rand() % 60 - 30), 0.0f);
 	}
 }

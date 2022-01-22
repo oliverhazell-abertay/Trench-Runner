@@ -111,16 +111,16 @@ private:
 	// Treadmill management
 	const float wall_size_ = 5000.0f;
 	float scroll_speed_ = 220.0f;
+	float enemy_spawn_timer = 0.0f;
+	float enemy_spawn_max = 3.0f;
 
 	// Score keeping
-	float score = 0;
-	float enemy_spawn_timer = 0.0f;
-	float enemy_spawn_max = 3.0f; 
+	float score = 0; 
 
 	// Game over
 	void GameOverTransition(float delta_time);
 	float gameOverTimer = 0.0f;
-	float gameOverTimerMax = 3.0f;
+	float gameOverTimerMax = 0.5f;
 
 	// Movement
 	float moveSpeed = 5.0f;
@@ -131,6 +131,13 @@ private:
 	int shootSpeed = 600;
 	float turn_tilt = 0.025f;
 	void CastRayFromCamera(Bullet* bullet);
+
+	// Screen swipe
+	bool ScreenSwipe(float delta_time, int dir);
+	gef::Sprite screen_swipe_sprite;
+	bool transistion = false;
+	bool swipeMoving = false;
+	bool gameStarted = false;
 
 	// AR
 	/*gef::Matrix44 camera_feed_matrix_;
