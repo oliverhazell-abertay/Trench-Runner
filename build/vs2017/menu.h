@@ -26,6 +26,8 @@ class Menu : public GameState
 public:
 	Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font);
 	~Menu();
+	void Init();
+	void CleanUp();
 
 	virtual void OnEntry(Type prev_game_state) override;
 	virtual void OnExit(Type next_game_state) override;
@@ -45,6 +47,7 @@ private:
 	void ScreenSwipe(float delta_time);
 	gef::Sprite screen_swipe_sprite;
 	bool transistion = false;
+	Type swiping_to;
 	
 	MenuObject menu_buttons;
 

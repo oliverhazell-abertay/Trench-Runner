@@ -36,7 +36,7 @@ void StarterApp::Init()
 	game_states_[0] = new Menu(&platform_, sprite_renderer_, input_manager_, font_);
 	game_states_[1] = new GameRunning(&platform_, sprite_renderer_, renderer_3d_, input_manager_);
 	game_states_[2] = new Paused(sprite_renderer_, input_manager_, font_);
-	game_states_[3] = new GameOver(sprite_renderer_, input_manager_, font_);
+	game_states_[3] = new GameOver(&platform_, sprite_renderer_, input_manager_, font_);
 }
 
 void StarterApp::CleanUp()
@@ -60,6 +60,12 @@ void StarterApp::CleanUp()
 
 	delete game_states_[1];
 	game_states_[1] = NULL;
+
+	delete game_states_[2];
+	game_states_[2] = NULL;
+
+	delete game_states_[3];
+	game_states_[3] = NULL;
 }
 
 bool StarterApp::Update(float frame_time)

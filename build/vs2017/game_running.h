@@ -47,6 +47,7 @@ public:
 	virtual void OnExit(Type next_game_state) override;
 	virtual void Update(float delta_time) override;
 	virtual void Render() override;
+	void Init();
 	void CleanUp();
 
 	gef::Mesh* GetFirstMesh(gef::Scene* scene);

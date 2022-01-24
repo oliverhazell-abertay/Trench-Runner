@@ -2,7 +2,8 @@
 
 
 
-UIButton::UIButton(gef::Sprite sprite)
+UIButton::UIButton(gef::Sprite sprite, ButtonType type)
 {
 	button_sprite = sprite;
+	button_type = type;
 }

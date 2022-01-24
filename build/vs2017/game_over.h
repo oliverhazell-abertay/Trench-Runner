@@ -5,6 +5,8 @@
 #include <graphics/mesh_instance.h>
 #include "primitive_builder.h"
 #include "game_object.h"
+#include "menu_object.h"
+#include "load_texture.h"
 
 
 namespace gef
@@ -21,8 +23,10 @@ namespace gef
 class GameOver : public GameState
 {
 public:
-	GameOver(gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font);
+	GameOver(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::InputManager* in_, gef::Font* font);
 	~GameOver();
+	void Init();
+	void CleanUp();
 
 	virtual void OnEntry(Type prev_game_state) override;
 	virtual void OnExit(Type next_game_state) override;
@@ -33,5 +37,23 @@ private:
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;
+
+	// Background
+	void ScrollBG(float delta_time);
+	gef::Sprite BG;
+
+	// Screen swipe
+	void ScreenSwipe(float delta_time);
+	gef::Sprite screen_swipe_sprite;
+	bool transistion = false;
+	Type swiping_to;
+
+	MenuObject menu_buttons;
+
+	// Logo
+	gef::Sprite logo;
+	gef::Colour logo_colour;
+	bool pulseUp = false;
+	void PulseLogo(float delta_time);
 };
 

@@ -26,6 +26,15 @@ Menu::Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Inpu
 {
 	type_ = MENU;
 
+	Init();
+}
+
+Menu::~Menu()
+{
+}
+
+void Menu::Init()
+{
 	// Buttons
 	menu_buttons.Init();
 	gef::Sprite tempSprite;
@@ -33,15 +42,15 @@ Menu::Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Inpu
 	tempSprite.set_width(120.0f);
 	tempSprite.set_height(60.0f);
 	tempSprite.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y + 120.0f, 0.0f));
-	tempSprite.set_texture(CreateTextureFromPNG("button_play_tex.png", *platform));
-	UIButton* tempButton = new UIButton(tempSprite);
+	tempSprite.set_texture(CreateTextureFromPNG("button_play_tex.png", *platform_));
+	UIButton* tempButton = new UIButton(tempSprite, STARTGAME);
 	menu_buttons.buttons_.push_back(tempButton);
 	// Options button
 	tempSprite.set_width(120.0f);
 	tempSprite.set_height(60.0f);
 	tempSprite.set_position(gef::Vector4(SCREEN_CENTRE_X, tempSprite.position().y() + 70.0f, 0.0f));
-	tempSprite.set_texture(CreateTextureFromPNG("button_main_menu_tex.png", *platform));
-	tempButton = new UIButton(tempSprite);
+	tempSprite.set_texture(CreateTextureFromPNG("button_main_menu_tex.png", *platform_));
+	tempButton = new UIButton(tempSprite, OPTIONS);
 	menu_buttons.buttons_.push_back(tempButton);
 
 	// Logo init
@@ -49,32 +58,37 @@ Menu::Menu(gef::Platform* platform, gef::SpriteRenderer* sprite_rend_, gef::Inpu
 	logo.set_width(576.0f);
 	logo.set_height(384.0f);
 	logo.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y - 100.0f, 0.0f));
-	logo.set_texture(CreateTextureFromPNG("logo_tex.png", *platform));
+	logo.set_texture(CreateTextureFromPNG("logo_tex.png", *platform_));
 
 	// BG init
 	BG.set_width(1920.0f);
 	BG.set_height(544.0f);
 	BG.set_position(gef::Vector4(0.0f, SCREEN_CENTRE_Y, 0.0f));
-	BG.set_texture(CreateTextureFromPNG("menu_bg.png", *platform));
+	BG.set_texture(CreateTextureFromPNG("menu_bg.png", *platform_));
 
 	// screen swipe init
 	screen_swipe_sprite.set_width(1200.0f);
 	screen_swipe_sprite.set_height(544.0f);
 	screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
-	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform));
-}
-
-Menu::~Menu()
-{
+	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform_));
 }
 
 void Menu::OnEntry(Type prev_game_state)
 {
+	Init();
 }
 
 void Menu::OnExit(Type next_game_state)
 {
 	signal_to_change = EMPTY;
+	swiping_to = EMPTY;
+	transistion = false;
+	CleanUp();
+}
+
+void Menu::CleanUp()
+{
+	menu_buttons.CleanUp();
 }
 
 void Menu::Update(float deltaTime)
@@ -110,6 +124,23 @@ void Menu::Update(float deltaTime)
 			if (keyboard->IsKeyPressed(gef::Keyboard::KC_S))
 			{
 				menu_buttons.PrevButton();
+			}
+			// Press menu button
+			if (keyboard->IsKeyPressed(gef::Keyboard::KC_RETURN) || keyboard->IsKeyPressed(gef::Keyboard::KC_SPACE))
+			{
+				switch (menu_buttons.buttons_[menu_buttons.currentButton_]->button_type)
+				{
+				case OPTIONS:
+					swiping_to = MENU;
+					transistion = true;
+					break;
+				case STARTGAME:
+					swiping_to = GAMERUNNING;
+					transistion = true;
+					break;
+				default:
+					break;
+				}
 			}
 		}
 	}
@@ -155,7 +186,7 @@ void Menu::ScreenSwipe(float delta_time)
 	if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 50.0f)
 		screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time), SCREEN_CENTRE_Y, 0.0f));
 	else
-		signal_to_change = GAMERUNNING;
+		signal_to_change = swiping_to;
 }
 
 void Menu::PulseLogo(float delta_time)

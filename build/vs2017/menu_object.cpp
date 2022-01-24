@@ -15,6 +15,9 @@ void MenuObject::CleanUp()
 		delete buttons_[button_num];
 		buttons_[button_num] = NULL;
 	}
+	buttons_.clear();
+
+	currentButton_ = 0;
 }
 
 void MenuObject::Update(float delta_time)

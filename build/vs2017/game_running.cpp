@@ -38,7 +38,10 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	InitFont();
 
 	primitive_builder_ = new PrimitiveBuilder(*platform_);
+}
 
+void GameRunning::Init()
+{
 	// Player object init
 	player_ = new Player(primitive_builder_);
 	player_->player_object.set_mesh(primitive_builder_->GetDefaultCubeMesh());
@@ -51,7 +54,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	enemy_->StartMoving(gef::Vector4(5.0f, 5.0f, 300.0f), 2.0f);
 
 	// Init floor
-	floor_material.set_texture(CreateTextureFromPNG("floor_big.png", *platform));
+	floor_material.set_texture(CreateTextureFromPNG("floor_big.png", *platform_));
 	floor_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	gef::Vector4 floor_translation_(0.0f, -100.0f, 0.0f);
 	floor_.position_ = floor_translation_;
@@ -59,7 +62,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	floor_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 	// Init walls
 	gef::Vector4 wall_translation;
-	wall_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform));
+	wall_material.set_texture(CreateTextureFromPNG("walls_big.png", *platform_));
 	// Left wall
 	left_wall_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	wall_translation = gef::Vector4(-200.0f, 0.0f, 0.0f);
@@ -74,7 +77,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	right_wall_.velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 
 	// Pillars init
-	pillar_material.set_texture(CreateTextureFromPNG("pillar.png", *platform));
+	pillar_material.set_texture(CreateTextureFromPNG("pillar.png", *platform_));
 	for (int pillar_num = 0; pillar_num < 4; pillar_num++)
 	{
 		GameObject* tempPillar;
@@ -85,6 +88,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 		tempPillar->velocity_ = gef::Vector4(0.0f, 0.0f, scroll_speed_);
 		pillars_.push_back(tempPillar);
 	}
+	closest_pillar_ = 0;
 
 	// Init cursor
 	crosshair_ = CreateTextureFromPNG("crosshair.png", *platform_);
@@ -97,7 +101,7 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 
 	// Init skybox
 	skybox_black.set_colour(gef::Colour(1.0f, 1.0f, 1.0f, 1.0f).GetRGBA());
-	skybox_black.set_texture(CreateTextureFromPNG("space.png", *platform));
+	skybox_black.set_texture(CreateTextureFromPNG("space.png", *platform_));
 	sky_.set_mesh(primitive_builder_->GetDefaultCubeMesh());
 	sky_.scale_ = gef::Vector4(10000.0f, 10000.0f, 1.0f);
 	sky_.position_ = gef::Vector4(0.0f, 0.0f, -5000.0f);
@@ -112,7 +116,13 @@ GameRunning::GameRunning(gef::Platform* platform, gef::SpriteRenderer* sprite_re
 	screen_swipe_sprite.set_width(1200.0f);
 	screen_swipe_sprite.set_height(544.0f);
 	screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
-	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform));
+	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform_));
+
+	// Start treadmill
+	scroll_speed_ = 220.0f;
+
+	// Reset screen swipe
+	gameStarted = false;
 }
 
 GameRunning::~GameRunning()
@@ -125,6 +135,7 @@ void GameRunning::OnEntry(Type prev_game_state)
 	// if coming from menu, restart game
 	if (prev_game_state != PAUSE)
 	{
+		Init();
 		score = 0;
 		SetupCamera();
 	}
@@ -134,42 +145,27 @@ void GameRunning::OnEntry(Type prev_game_state)
 void GameRunning::OnExit(Type next_game_state)
 {
 	signal_to_change = EMPTY;
+	if (next_game_state != PAUSE)
+	{
+		CleanUp();
+	}
 }
 
 void GameRunning::CleanUp()
 {
-	delete font_;
-	font_ = NULL;
-
-	delete input_manager_;
-	input_manager_ = NULL;
-
-	delete sprite_renderer_;
-	sprite_renderer_ = NULL;
-
-	delete renderer_3d_;
-	renderer_3d_ = NULL;
-
-	delete model_scene_;
-	model_scene_ = NULL;
-
-	delete mesh_;
-	mesh_ = NULL;
-
-	delete primitive_builder_;
-	primitive_builder_ = NULL;
-
 	for (ALL_LASERS)
 	{
 		delete lasers_[laser_num];
 		lasers_[laser_num] = NULL;
 	}
+	lasers_.clear();
 
 	for (ALL_PILLARS)
 	{
 		delete pillars_[pillar_num];
 		pillars_[pillar_num] = NULL;
 	}
+	pillars_.clear();
 
 	enemy_->CleanUp();
 	delete enemy_;
