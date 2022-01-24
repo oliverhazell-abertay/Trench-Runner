@@ -34,7 +34,6 @@ GameOver::~GameOver()
 
 void GameOver::Init()
 {
-
 	// Buttons
 	menu_buttons.Init();
 	gef::Sprite tempSprite;
@@ -73,6 +72,10 @@ void GameOver::Init()
 	screen_swipe_sprite.set_height(544.0f);
 	screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
 	screen_swipe_sprite.set_texture(CreateTextureFromPNG("screenswipe.png", *platform_));
+
+	// Swipe to enter
+	swipe_direction = -1;
+	transistion = true;
 }
 
 void GameOver::OnEntry(Type prev_game_state)
@@ -134,10 +137,12 @@ void GameOver::Update(float deltaTime)
 				{
 					case MAINMENU:
 						swiping_to = MENU;
+						swipe_direction = 1;
 						transistion = true;
 						break;
 					case STARTGAME:
 						swiping_to = GAMERUNNING;
+						swipe_direction = 1;
 						transistion = true;
 						break;
 					default:
@@ -185,10 +190,46 @@ void GameOver::ScrollBG(float delta_time)
 
 void GameOver::ScreenSwipe(float delta_time)
 {
-	if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 50.0f)
-		screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time), SCREEN_CENTRE_Y, 0.0f));
-	else
-		signal_to_change = swiping_to;
+	// Swipe left to right
+	if (swipe_direction < 0)
+	{
+		// Flip sprite
+		screen_swipe_sprite.set_rotation(3.14f);
+		// If starting swipe, move off left of screen
+		if (!swipeMoving)
+			screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X - 50.0f, SCREEN_CENTRE_Y, 0.0f));
+		if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 1200.0f)
+		{
+			screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time), SCREEN_CENTRE_Y, 0.0f));
+			swipeMoving = true;
+		}
+		else
+		{
+			signal_to_change = swiping_to;
+			swipeMoving = false;
+			transistion = false;
+		}
+	}
+	//Swipe right to left
+	if (swipe_direction > 0)
+	{
+		// Reset rotation
+		screen_swipe_sprite.set_rotation(0.0f);
+		// If starting swipe, move off right of screen
+		if (!swipeMoving)
+			screen_swipe_sprite.set_position(gef::Vector4(SCREEN_CENTRE_X + 1200.0f, SCREEN_CENTRE_Y, 0.0f));
+		if (screen_swipe_sprite.position().x() > SCREEN_CENTRE_X - 50.0f)
+		{
+			screen_swipe_sprite.set_position(gef::Vector4(screen_swipe_sprite.position().x() - (1000.0f * delta_time), SCREEN_CENTRE_Y, 0.0f));
+			swipeMoving = true;
+		}
+		else
+		{
+			signal_to_change = swiping_to;
+			swipeMoving = false;
+			transistion = false;
+		}
+	}
 }
 
 void GameOver::PulseLogo(float delta_time)

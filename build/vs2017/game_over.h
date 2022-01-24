@@ -46,7 +46,9 @@ private:
 	void ScreenSwipe(float delta_time);
 	gef::Sprite screen_swipe_sprite;
 	bool transistion = false;
-	Type swiping_to;
+	bool swipeMoving = false;
+	int swipe_direction = 0; // -1 enter, 1 exit
+	Type swiping_to = EMPTY;
 
 	MenuObject menu_buttons;
 
