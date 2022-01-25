@@ -49,7 +49,6 @@ private:
 	gef::Renderer3D* renderer_3d_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;
-	PrimitiveBuilder* primitive_builder_;
 
 	float fps_;
 

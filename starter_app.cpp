@@ -19,7 +19,12 @@ StarterApp::StarterApp(gef::Platform& platform) :
 	Application(platform),
 	sprite_renderer_(NULL),
 	font_(NULL),
-	renderer_3d_(NULL)
+	renderer_3d_(NULL),
+	input_manager_(NULL),
+	camera_fov_(NULL),
+	fps_(NULL),
+	far_plane_(NULL),
+	near_plane_(NULL)
 {
 }
 
@@ -41,9 +46,6 @@ void StarterApp::Init()
 
 void StarterApp::CleanUp()
 {
-	delete primitive_builder_;
-	primitive_builder_ = NULL;
-
 	CleanUpFont();
 
 	delete input_manager_;
