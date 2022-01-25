@@ -49,7 +49,7 @@ void Menu::Init()
 	tempSprite.set_width(120.0f);
 	tempSprite.set_height(60.0f);
 	tempSprite.set_position(gef::Vector4(SCREEN_CENTRE_X, tempSprite.position().y() + 70.0f, 0.0f));
-	tempSprite.set_texture(CreateTextureFromPNG("button_main_menu_tex.png", *platform_));
+	tempSprite.set_texture(CreateTextureFromPNG("button_back_tex.png", *platform_));
 	tempButton = new UIButton(tempSprite, OPTIONS);
 	menu_buttons.buttons_.push_back(tempButton);
 

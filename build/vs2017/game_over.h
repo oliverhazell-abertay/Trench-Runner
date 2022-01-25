@@ -50,9 +50,6 @@ private:
 	int swipe_direction = 0; // -1 enter, 1 exit
 	Type swiping_to = EMPTY;
 
-	// Score
-	int score;
-
 	MenuObject menu_buttons;
 
 	// Logo

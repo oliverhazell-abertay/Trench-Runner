@@ -174,6 +174,10 @@ void GameOver::Render()
 		}
 		// Render logo
 		sprite_renderer_->DrawSprite(logo);
+		// Render score
+		if (!transistion)
+			if (font_)
+				font_->RenderText(sprite_renderer_, gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y + 35.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_CENTRE, "Final Score: %.0f", score);
 		// Render screenswipe
 		sprite_renderer_->DrawSprite(screen_swipe_sprite);
 	sprite_renderer_->End();

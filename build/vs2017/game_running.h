@@ -115,9 +115,6 @@ private:
 	float enemy_spawn_timer = 0.0f;
 	float enemy_spawn_max = 3.0f;
 
-	// Score keeping
-	float score = 0; 
-
 	// Game over
 	void GameOverTransition(float delta_time);
 	float gameOverTimer = 0.0f;

@@ -85,9 +85,12 @@ bool StarterApp::Update(float frame_time)
 			}
 		}
 	}
-	// Player update
+	// Current game_state update
 	game_states_[current_game_state_]->Update(frame_time);
-	
+
+	// Score update
+	game_states_[3]->score = game_states_[1]->score;
+
 	return true;
 }
 
@@ -106,7 +109,7 @@ void StarterApp::Render()
 	// setup the sprite renderer, but don't clear the frame buffer
 	// draw 2D sprites here
 	sprite_renderer_->Begin(false);
-		DrawHUD();
+		//DrawHUD();
 	sprite_renderer_->End();
 }
 void StarterApp::InitFont()

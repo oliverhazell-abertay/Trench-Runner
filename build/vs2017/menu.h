@@ -8,6 +8,7 @@
 #include "game_object.h"
 #include "menu_object.h"
 #include "load_texture.h"
+#include <audio/audio_manager.h>
 
 
 namespace gef
@@ -38,6 +39,7 @@ private:
 	gef::SpriteRenderer* sprite_renderer_;
 	gef::InputManager* input_manager_;
 	gef::Font* font_;
+	gef::AudioManager* audio_manager_;
 
 	// Background
 	void ScrollBG(float delta_time);

@@ -775,4 +775,8 @@ bool GameRunning::ScreenSwipe(float delta_time, int dir)
 			return true;
 		}
 	}
+	if (dir = 0)
+	{
+		return true;
+	}
 }

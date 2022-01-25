@@ -14,6 +14,8 @@ public:
 	virtual void Render() = 0;
 
 	Type signal_to_change = EMPTY;
+
+	float score = 0;
 protected:
 	Type type_ = EMPTY;
 };
