@@ -523,13 +523,13 @@ void GameRunning::Movement(gef::Keyboard* keyboard_)
 	if (keyboard_->IsKeyDown(gef::Keyboard::KC_A))
 	{
 		temp_velocity.set_x(temp_velocity.x() - moveSpeed);
-		temp_rot_.set_x(turn_tilt * -1);
+		//temp_rot_.set_x(turn_tilt * -1);
 	}
 	// Move right
 	if (keyboard_->IsKeyDown(gef::Keyboard::KC_D))
 	{
 		temp_velocity.set_x(temp_velocity.x() + moveSpeed);
-		temp_rot_.set_x(turn_tilt);
+		//temp_rot_.set_x(turn_tilt);
 	}
 	// Work out direction player is headed
 	int horDirection = 0;
@@ -545,11 +545,15 @@ void GameRunning::Movement(gef::Keyboard* keyboard_)
 	// Update player velocity based on input
 	player_->player_object.velocity_ = temp_velocity;
 
+	// Update player rotation based on velocity
+	temp_rot_.set_x(player_->player_object.velocity_.x() * turn_tilt);
+	
 	// Set camera to player position and rotation based on input
 	camera_eye_ = player_->player_object.position_;
 	camera_up_ = temp_rot_;
 	// Keep camera looking straight forward
 	camera_lookat_ = player_->player_object.position_;
+	camera_lookat_.set_y(camera_lookat_.y() + (player_->player_object.velocity_.y() * (turn_tilt * 0.5f)));
 	camera_lookat_.set_z(camera_lookat_.z() - 1.0f);
 
 }

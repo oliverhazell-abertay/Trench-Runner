@@ -157,7 +157,10 @@ void StarterApp::SetupCamera()
 
 void StarterApp::ChangeGameState(int next_game_state_num_)
 {
+	// Game state out
 	game_states_[current_game_state_]->OnExit(game_states_[next_game_state_num_]->GetType());
+	// Game state in
 	game_states_[next_game_state_num_]->OnEntry(game_states_[current_game_state_]->GetType());
+	// Change game state
 	current_game_state_ = next_game_state_num_;
 }

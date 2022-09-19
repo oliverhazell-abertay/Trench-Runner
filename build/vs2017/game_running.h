@@ -126,8 +126,8 @@ private:
 	float vertDamping = 2.5f;
 
 	// Shooting
-	int shootSpeed = 600;
-	float turn_tilt = 0.025f;
+	int shootSpeed = 1000;
+	float turn_tilt = 0.0025f;
 	void CastRayFromCamera(Bullet* bullet);
 
 	// Screen swipe
