@@ -99,6 +99,14 @@ void GameRunning::Init()
 	gef::Colour crosshair_colour_(0.0f, 1.0f, 0.0f, 1.0f);
 	cursor_.set_colour(crosshair_colour_.GetABGR());
 
+	// Init HUD
+	hud_tex_ = CreateTextureFromPNG("HUD.png", *platform_);
+	hud_.set_texture(hud_tex_);
+	hud_.set_height(544.0f);
+	hud_.set_width(960.0f);
+	hud_.set_position(gef::Vector4(SCREEN_CENTRE_X, SCREEN_CENTRE_Y, 0.0f));
+
+
 	// Init skybox
 	skybox_black.set_colour(gef::Colour(1.0f, 1.0f, 1.0f, 1.0f).GetRGBA());
 	skybox_black.set_texture(CreateTextureFromPNG("space.png", *platform_));
@@ -340,6 +348,8 @@ void GameRunning::DrawHUD()
 {
 	// Draw cursor
 	sprite_renderer_->DrawSprite(cursor_);
+	// Draw HUD
+	sprite_renderer_->DrawSprite(hud_);
 	// Draw Score
 	if (font_)
 	{
@@ -401,21 +411,6 @@ void GameRunning::ReadSceneAndAssignFirstMesh(const char* filename, gef::Scene**
 	// if there is mesh data in the scene, create a mesh to draw from the first mesh
 	*mesh = GetFirstMesh(scn);
 	*scene = scn;
-}
-
-bool GameRunning::IsColliding_SphereToSphere(const gef::MeshInstance& meshInstance1, const gef::MeshInstance& meshInstance2)
-{
-	gef::Sphere sphere1 = meshInstance1.mesh()->bounding_sphere();
-	gef::Sphere sphere2 = meshInstance2.mesh()->bounding_sphere();
-
-	gef::Sphere sphere1_transformed = sphere1.Transform(meshInstance1.transform());
-	gef::Sphere sphere2_transformed = sphere2.Transform(meshInstance2.transform());
-
-	gef::Vector4 offset = sphere1_transformed.position() - sphere2_transformed.position();
-	float distance = sqrtf(offset.x() * offset.x() + offset.y() * offset.y() + offset.z() * offset.z());
-	float combined_radii = sphere1.radius() + sphere2.radius();
-
-	return distance < combined_radii;
 }
 
 bool GameRunning::IsColliding_AABBToAABB(const gef::MeshInstance& meshInstance1, const gef::MeshInstance& meshInstance2)
@@ -683,39 +678,6 @@ void GameRunning::SpawnEnemy(gef::Vector4 initPos, gef::Vector4 initTarget)
 	enemy_->position = initPos;
 	enemy_->StartMoving(initTarget, 2.0f);
 	enemy_->alive = true;
-}
-
-// https://antongerdelan.net/opengl/raycasting.html
-void GameRunning::CastRayFromCamera(Bullet* bullet)
-{
-	gef::Vector4 startPoint;
-	gef::Vector4 direction;
-
-	gef::Vector2 ndc;
-
-	float hw = platform_->width() * 0.5f;
-	float hh = platform_->height() * 0.5f;
-
-	ndc.x = (static_cast<float>(cursor_.position().x()) - hw) / hw;
-	ndc.y = (hh - static_cast<float>(cursor_.position().y() - 10.0f)) / hh;
-
-	gef::Matrix44 projectionInverse;
-	projectionInverse.Inverse(renderer_3d_->view_matrix() * renderer_3d_->projection_matrix());
-
-	gef::Vector4 nearPoint, farPoint;
-
-	nearPoint = gef::Vector4(ndc.x, ndc.y, 0.01f, 1.0f).TransformW(projectionInverse);
-	farPoint = gef::Vector4(ndc.x, ndc.y, 100.0f, 1.0f).TransformW(projectionInverse);
-
-	nearPoint /= nearPoint.w();
-	farPoint /= farPoint.w();
-
-	startPoint = gef::Vector4(nearPoint.x(), nearPoint.y(), nearPoint.z());
-	direction = nearPoint - farPoint;
-	direction.Normalise();
-
-	bullet->position_ = startPoint;
-	bullet->velocity_ = direction * shootSpeed;
 }
 
 void GameRunning::GameOverTransition(float delta_time)

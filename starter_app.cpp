@@ -96,21 +96,16 @@ bool StarterApp::Update(float frame_time)
 
 void StarterApp::Render()
 {
+	// Camera set up
 	gef::Matrix44 projection_matrix;
 	gef::Matrix44 view_matrix;
-
 	projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
 	view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 	renderer_3d_->set_projection_matrix(projection_matrix);
 	renderer_3d_->set_view_matrix(view_matrix);
 
+	// Current game state render
 	game_states_[current_game_state_]->Render();
-
-	// setup the sprite renderer, but don't clear the frame buffer
-	// draw 2D sprites here
-	sprite_renderer_->Begin(false);
-		//DrawHUD();
-	sprite_renderer_->End();
 }
 void StarterApp::InitFont()
 {

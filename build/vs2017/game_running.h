@@ -107,7 +107,9 @@ private:
 
 	// UI
 	gef::Sprite cursor_;
+	gef::Sprite hud_;
 	gef::Texture* crosshair_;
+	gef::Texture* hud_tex_;
 
 	// Treadmill management
 	const float wall_size_ = 5000.0f;
